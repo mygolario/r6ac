@@ -45,6 +45,6 @@ EXPOSE 3001
 
 # Use wget which is built into node:20-alpine — no apk needed
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD wget -qO- http://localhost:3001/health || exit 1
+  CMD wget -qO- http://127.0.0.1:3001/health || exit 1
 
 CMD ["npx", "tsx", "dist/index.js"]

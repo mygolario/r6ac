@@ -6,6 +6,6 @@
     "args": {}
   },
   "healthCheck": {
-    "command": "wget -qO- http://localhost:3001/health || exit 1"
+    "command": "wget -qO- http://127.0.0.1:3001/health || exit 1"
   }
 }
