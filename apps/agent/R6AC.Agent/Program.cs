@@ -6,21 +6,23 @@ using R6AC.Agent.Detectors;
 using R6AC.Agent.Hardware;
 using R6AC.Agent.Integrity;
 using R6AC.Agent.Reporting;
+using R6AC.Agent.Security;
+using R6AC.Agent.Update;
 using R6AC.Agent.Utils;
 using Serilog;
 
 namespace R6AC.Agent;
 
 /// <summary>
-/// کلاس اصلی اجرای برنامه و چرخه اسکن دوره‌ای ایجنت کلاینت.
-/// Main execution class and periodic scan loop orchestration.
+/// کلاس اصلی اجرای برنامه و چرخه اسکن دوره‌ای ایجنت کلاینت (نسخه سخت‌شده امنیتی).
+/// Main execution class and periodic scan loop orchestration with anti-tamper and anti-debug protections.
 /// </summary>
 public class Program
 {
     public static async Task Main(string[] args)
     {
         Logger.Initialize();
-        Log.Information("R6AC Anti-Cheat Client Agent starting...");
+        Log.Information("R6AC Anti-Cheat Client Agent (Phase 5 Hardened) starting...");
 
         var cts = new CancellationTokenSource();
         Console.CancelKeyPress += (s, e) =>
@@ -31,8 +33,9 @@ public class Program
         };
 
         var config = AgentConfig.Load();
-        var integrityCheck = SelfIntegrityCheck.Verify(config);
 
+        // 1. Verify Self-Integrity
+        var integrityCheck = SelfIntegrityCheck.Verify(config);
         if (!integrityCheck.IsIntact)
         {
             Log.Fatal("Self-integrity check failed! Tampering or debugger detected. Refusing to start.");
@@ -46,6 +49,32 @@ public class Program
         }
 
         Log.Information("Self-integrity verified successfully.");
+
+        // 2. Lock Critical Memory Regions (PAGE_EXECUTE_READ)
+        MemoryProtection.LockCriticalRegions();
+
+        // 3. Check for Updates
+        var updateSvc = new UpdateService(config);
+        var updateRes = await updateSvc.CheckForUpdateAsync(cts.Token);
+        if (updateRes.IsUpdateAvailable && updateRes.Info != null)
+        {
+            if (updateRes.IsForceUpdate)
+            {
+                Log.Warning("Mandatory update required! Downloading v{Version}...", updateRes.Info.Version);
+                var pkgPath = await updateSvc.DownloadUpdateAsync(updateRes.Info, cts.Token);
+                if (updateSvc.VerifyUpdatePackage(pkgPath, updateRes.Info.Version, updateRes.Info.Sha256, updateRes.Info.Signature))
+                {
+                    updateSvc.ApplyUpdate(pkgPath);
+                }
+                Log.Fatal("Force update required. Exiting un-updated client.");
+                Environment.Exit(0);
+                return;
+            }
+            else
+            {
+                Log.Information("Optional agent update available: v{Version}", updateRes.Info.Version);
+            }
+        }
 
         var hwFingerprinter = new HardwareFingerprinter();
         var hwHash = hwFingerprinter.GetFingerprintHash();
@@ -82,6 +111,7 @@ public class Program
             new AdvancedUsbDetector(),
             new DualPcDetector(),
             new SpoofDetector(),
+            new AntiVmDetector(),
             timingAnalyzer
         };
 
@@ -92,6 +122,28 @@ public class Program
             while (!cts.Token.IsCancellationRequested)
             {
                 Log.Debug("Starting scan cycle...");
+
+                // 0a. Anti-Debug Check (Silent Failure mode triggers internally if debugger present)
+                AntiDebug.RunAllChecks();
+
+                // 0b. Method Prologue Integrity Check
+                if (!MemoryProtection.CheckAllCriticalMethods(out var hookedMethod))
+                {
+                    Log.Warning("Critical method prologue hook detected on {Method}!", hookedMethod);
+                    var evidence = new Dictionary<string, object> { ["HookedMethod"] = hookedMethod };
+                    var dRes = new DetectionResult(
+                        Type: DetectionType.TAMPER_DETECTED,
+                        Confidence: 1.0f,
+                        ReasonCode: "METHOD_PROLOGUE_HOOKED_" + hookedMethod.Replace(".", "_").ToUpperInvariant(),
+                        Description: $"Runtime method hook detected on {hookedMethod}.",
+                        DescriptionFA: $"دستکاری و هوک در کدهای اجرایی تشخیص داده شد ({hookedMethod}).",
+                        Evidence: evidence
+                    );
+
+                    var report = BuildReport(dRes, session, config);
+                    await reportQueue.EnqueueAsync(report);
+                    TriggerAutoKick(session, dRes);
+                }
 
                 foreach (var detector in detectors)
                 {
@@ -172,7 +224,7 @@ public class Program
         }
         catch
         {
-            // Named pipe server (game/tournament wrapper) might not be active
+            // Named pipe server might not be active
         }
     }
 
@@ -182,16 +234,6 @@ public class Program
         if (pending.Count == 0) return;
 
         Log.Information("Attempting to sync {Count} pending reports to server...", pending.Count);
-
-        foreach (var report in pending)
-        {
-            if (ct.IsCancellationRequested) break;
-
-            var success = await reporter.SendReportAsync(report, ct);
-            if (success)
-            {
-                await queue.MarkSyncedAsync(report.Id);
-            }
-        }
+        await reporter.SyncReports(queue, ct);
     }
 }

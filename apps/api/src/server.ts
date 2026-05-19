@@ -19,6 +19,7 @@ import playerRoutes from './routes/player.routes';
 import reportRoutes from './routes/report.routes';
 import tournamentRoutes from './routes/tournament.routes';
 import { healthRoutes } from './routes/v1/health';
+import { agentRoutes } from './routes/v1/agent';
 import wsRoutes from './routes/ws.routes';
 import { WebSocketService } from './services/websocket.service';
 
@@ -96,6 +97,7 @@ async function start() {
     await app.register(playerRoutes, { prefix: '/api/v1/players' });
     await app.register(tournamentRoutes, { prefix: '/api/v1/tournaments' });
     await app.register(reportRoutes, { prefix: '/api/v1/reports' });
+    await app.register(agentRoutes, { prefix: '/api/v1/agent' });
     await app.register(wsRoutes, { prefix: '/ws' });
 
     // Healthcheck

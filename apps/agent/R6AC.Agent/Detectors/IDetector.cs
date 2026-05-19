@@ -24,7 +24,9 @@ public enum DetectionType
     DUAL_PC_PATTERN,
     HWID_SPOOF,
     NO_RECOIL,
-    SESSION_ANOMALY
+    SESSION_ANOMALY,
+    TAMPER_DETECTED,
+    VM_ENVIRONMENT
 }
 
 /// <summary>

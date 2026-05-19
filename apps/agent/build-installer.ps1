@@ -19,6 +19,10 @@ Write-Host "`n[2/4] Staging files for NSIS packaging in $InstallerFilesDir..."
 Copy-Item "$DistDir/*.*" "$InstallerFilesDir/" -Recurse -Force
 Copy-Item "$BaseDir/R6AC.Agent/agent-config.json" "$InstallerFilesDir/agent-config.json" -Force
 
+Write-Host "`n[2b/4] Generating integrity-manifest.json..."
+dotnet run --project "$BaseDir/tools/GenerateManifest.csproj" -- "$InstallerFilesDir"
+
+
 Write-Host "`n[3/4] Generating embedded R6AC-icon.ico..."
 $TrayAppExe = "$InstallerFilesDir/R6AC.TrayApp.exe"
 if (Test-Path $TrayAppExe) {

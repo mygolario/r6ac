@@ -3,13 +3,14 @@ using System.Net.Http.Json;
 using Polly;
 using Polly.Retry;
 using R6AC.Agent.Core;
+using R6AC.Agent.Security;
 using Serilog;
 
 namespace R6AC.Agent.Reporting;
 
 /// <summary>
-/// ارسال‌کننده گزارش‌ها به سرور R6AC با استفاده از سیاست‌های بازیابی Polly (۳ تلاش مجدد).
-/// Report reporter uploading reports to R6AC API using Polly retry policies (3 retries).
+/// ارسال‌کننده گزارش‌ها به سرور R6AC با استفاده از سیاست‌های بازیابی Polly (۳ تلاش مجدد) و مکانیزم شکست خاموش.
+/// Report reporter uploading reports to R6AC API using Polly retry policies and anti-debug silent failure.
 /// </summary>
 public class ApiReporter
 {
@@ -20,7 +21,8 @@ public class ApiReporter
     public ApiReporter(AgentConfig config)
     {
         _config = config;
-        _httpClient = new HttpClient { BaseAddress = new Uri(config.ApiBaseUrl) };
+        var baseUrl = StringVault.Get(VaultKey.ApiBaseUrl);
+        _httpClient = new HttpClient { BaseAddress = new Uri(baseUrl) };
         if (!string.IsNullOrWhiteSpace(config.ServiceToken))
         {
             _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", config.ServiceToken);
@@ -38,11 +40,58 @@ public class ApiReporter
     }
 
     /// <summary>
+    /// همگام‌سازی تمامی گزارش‌های صف با سرور.
+    /// Sync all pending reports in queue with server.
+    /// </summary>
+    public virtual async Task<bool> SyncReports(ReportQueue queue, CancellationToken ct = default)
+    {
+        var pending = await queue.GetPendingAsync();
+        if (pending.Count == 0) return true;
+
+        bool allSynced = true;
+        foreach (var report in pending)
+        {
+            if (ct.IsCancellationRequested) break;
+            var success = await SendReportAsync(report, ct);
+            if (success)
+            {
+                await queue.MarkSyncedAsync(report.Id);
+            }
+            else
+            {
+                allSynced = false;
+            }
+        }
+        return allSynced;
+    }
+
+    /// <summary>
     /// ارسال گزارش تشخیص به سرور.
     /// Send detection report to server.
     /// </summary>
     public virtual async Task<bool> SendReportAsync(DetectionReport report, CancellationToken ct = default)
     {
+        if (AntiDebug.IsSilentModeActive)
+        {
+            var elapsed = (DateTime.UtcNow - AntiDebug.SilentModeStartTime).TotalSeconds;
+            if (elapsed <= 60)
+            {
+                // Start reporting fabricated CLEAN results for 60 seconds
+                var fakeCleanReport = report with { DetectionType = "CLEAN", Confidence = 0.0f, ReasonCode = "SYSTEM_CLEAN" };
+                try
+                {
+                    await _httpClient.PostAsJsonAsync("/api/v1/reports", fakeCleanReport, ct);
+                }
+                catch { }
+                return true; // Pretend success
+            }
+            else
+            {
+                // Silently stop reporting entirely
+                return true; // Pretend success but do nothing
+            }
+        }
+
         if (_config.OfflineMode)
         {
             Log.Information("Agent is in offline mode. Report {ReportId} queued locally.", report.Id);

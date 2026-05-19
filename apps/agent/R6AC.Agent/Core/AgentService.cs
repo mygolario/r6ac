@@ -7,6 +7,8 @@ using R6AC.Agent.Hardware;
 using R6AC.Agent.Integrity;
 using R6AC.Agent.Kernel;
 using R6AC.Agent.Reporting;
+using R6AC.Agent.Security;
+using R6AC.Agent.Update;
 using R6AC.Agent.Utils;
 using Serilog;
 
@@ -26,6 +28,7 @@ public class AgentService
 
     public event EventHandler<DetectionReport>? OnDetectionTriggered;
     public event EventHandler<string>? OnStatusChanged;
+    public event EventHandler<UpdateInfo>? OnUpdateAvailable;
 
     public string CurrentState { get; private set; } = "CLEAN"; // CLEAN, WARNING, ALERT
     public int DetectionCount { get; private set; } = 0;
@@ -35,6 +38,7 @@ public class AgentService
     public AgentConfig Config => _config;
     public AgentSession? Session => _session;
     public ReportQueue? ReportQueue => _reportQueue;
+    public ApiReporter? ApiReporter => _apiReporter;
 
     public AgentService(AgentConfig config)
     {
@@ -47,14 +51,40 @@ public class AgentService
         try
         {
             Logger.Initialize();
-            Log.Information("Initializing AgentService...");
+            Log.Information("Initializing AgentService (Phase 5 Hardened)...");
 
+            // 1. Verify Self-Integrity
             var integrityCheck = SelfIntegrityCheck.Verify(_config);
             if (!integrityCheck.IsIntact)
             {
                 var msg = "Self-integrity check failed! Tampering or debugger detected.";
                 Log.Fatal(msg);
                 return (false, msg);
+            }
+
+            // 2. Lock Critical Memory Regions
+            MemoryProtection.LockCriticalRegions();
+
+            // 3. Check for Updates
+            var updateSvc = new UpdateService(_config);
+            var updateRes = await updateSvc.CheckForUpdateAsync();
+            if (updateRes.IsUpdateAvailable && updateRes.Info != null)
+            {
+                if (updateRes.IsForceUpdate)
+                {
+                    Log.Warning("Mandatory update required! Downloading v{Version}...", updateRes.Info.Version);
+                    var pkgPath = await updateSvc.DownloadUpdateAsync(updateRes.Info);
+                    if (updateSvc.VerifyUpdatePackage(pkgPath, updateRes.Info.Version, updateRes.Info.Sha256, updateRes.Info.Signature))
+                    {
+                        updateSvc.ApplyUpdate(pkgPath);
+                    }
+                    return (false, "Force update required. Restarting agent...");
+                }
+                else
+                {
+                    Log.Information("Optional agent update available: v{Version}", updateRes.Info.Version);
+                    OnUpdateAvailable?.Invoke(this, updateRes.Info);
+                }
             }
 
             var hwFingerprinter = new HardwareFingerprinter();
@@ -83,10 +113,11 @@ public class AgentService
             if (_config.Detection.BehavioralDetection) _detectors.Add(new BehavioralDetector());
             if (_config.Detection.GameIntegrityCheck) _detectors.Add(new GameIntegrityCheck(_config));
 
-            // Advanced Phase 4 Detectors
+            // Advanced Phase 4 & Phase 5 Detectors
             _detectors.Add(new AdvancedUsbDetector());
             _detectors.Add(new DualPcDetector());
             _detectors.Add(new SpoofDetector());
+            _detectors.Add(new AntiVmDetector());
 
             var timingAnalyzer = new InputTimingAnalyzer();
             timingAnalyzer.StartBackgroundHook();
@@ -107,7 +138,6 @@ public class AgentService
         if (_kernelBridge.Connect())
         {
             Log.Information("Connected to R6AC Kernel Driver successfully.");
-            // Find game PID if already running
             var gameProc = System.Diagnostics.Process.GetProcessesByName("RainbowSix").FirstOrDefault();
             if (gameProc != null)
             {
@@ -135,22 +165,7 @@ public class AgentService
         if (_reportQueue == null || _apiReporter == null) return false;
         try
         {
-            var pending = await _reportQueue.GetPendingAsync();
-            if (pending.Count == 0) return true;
-
-            bool allSynced = true;
-            foreach (var report in pending)
-            {
-                var success = await _apiReporter.SendReportAsync(report, CancellationToken.None);
-                if (success)
-                {
-                    await _reportQueue.MarkSyncedAsync(report.Id);
-                }
-                else
-                {
-                    allSynced = false;
-                }
-            }
+            bool allSynced = await _apiReporter.SyncReports(_reportQueue, CancellationToken.None);
             LastSyncTime = DateTime.Now;
             OnStatusChanged?.Invoke(this, "SYNCED");
             return allSynced;
@@ -168,6 +183,45 @@ public class AgentService
 
         while (!ct.IsCancellationRequested)
         {
+            // 0. Anti-Debug Check (Silent Failure mode triggers internally if debugger present)
+            AntiDebug.RunAllChecks();
+
+            // 0b. Method Prologue Integrity Check
+            if (!MemoryProtection.CheckAllCriticalMethods(out var hookedMethod))
+            {
+                Log.Warning("Critical method prologue hook detected on {Method}!", hookedMethod);
+                var evidence = new Dictionary<string, object> { ["HookedMethod"] = hookedMethod };
+                var dRes = new DetectionResult(
+                    Type: DetectionType.TAMPER_DETECTED,
+                    Confidence: 1.0f,
+                    ReasonCode: "METHOD_PROLOGUE_HOOKED_" + hookedMethod.Replace(".", "_").ToUpperInvariant(),
+                    Description: $"Runtime method hook detected on {hookedMethod}.",
+                    DescriptionFA: $"دستکاری و هوک در کدهای اجرایی تشخیص داده شد ({hookedMethod}).",
+                    Evidence: evidence
+                );
+
+                var evidenceJson = JsonSerializer.Serialize(dRes.Evidence, new JsonSerializerOptions { WriteIndented = false });
+                var rep = new DetectionReport(
+                    Id: Guid.NewGuid().ToString(),
+                    PlayerId: _session.PlayerId,
+                    MatchId: _session.MatchId,
+                    DetectionType: dRes.Type.ToString(),
+                    Confidence: dRes.Confidence,
+                    ReasonCode: dRes.ReasonCode,
+                    EvidenceJson: evidenceJson,
+                    RequiresHumanReview: false,
+                    AutoAction: "kick",
+                    CreatedAt: DateTime.UtcNow,
+                    IsSynced: false
+                );
+
+                await _reportQueue.EnqueueAsync(rep);
+                CurrentState = "ALERT";
+                TriggerAutoKick(_session, dRes);
+                OnDetectionTriggered?.Invoke(this, rep);
+                OnStatusChanged?.Invoke(this, CurrentState);
+            }
+
             // 1. Poll Kernel Reports
             if (_kernelBridge != null)
             {
@@ -367,7 +421,10 @@ public class AgentService
         {
             await Task.Delay(TimeSpan.FromSeconds(_config.ReportSyncIntervalSeconds), ct);
             if (ct.IsCancellationRequested) break;
-            await SyncNowAsync();
+            if (_apiReporter != null && _reportQueue != null)
+            {
+                await _apiReporter.SyncReports(_reportQueue, ct);
+            }
         }
     }
 

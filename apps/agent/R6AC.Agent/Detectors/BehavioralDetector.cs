@@ -107,6 +107,9 @@ public class BehavioralDetector : IDetector
     }
 
     /// <summary>
+    public DetectionResult? Analyze() => AnalyzeBuffer();
+
+    /// <summary>
     /// تحلیل بافر داده‌های ۶۰ ثانیه اخیر برای یافتن الگوهای غیرانسانی.
     /// Analyze recent 60-second buffer for inhuman patterns.
     /// </summary>
