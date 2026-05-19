@@ -1,0 +1,35 @@
+#pragma once
+
+// R6AC_Ioctl.h: Shared IOCTL codes and structs between C++ kernel driver and C# user agent
+
+#define R6AC_IOCTL_BASE 0x8000
+
+#define IOCTL_R6AC_GET_STATUS    CTL_CODE(R6AC_IOCTL_BASE, 0x01, METHOD_BUFFERED, FILE_READ_ACCESS)
+#define IOCTL_R6AC_GET_REPORTS   CTL_CODE(R6AC_IOCTL_BASE, 0x02, METHOD_BUFFERED, FILE_READ_ACCESS)
+#define IOCTL_R6AC_SET_GAME_PID  CTL_CODE(R6AC_IOCTL_BASE, 0x03, METHOD_BUFFERED, FILE_WRITE_ACCESS)
+#define IOCTL_R6AC_CLEAR_REPORTS CTL_CODE(R6AC_IOCTL_BASE, 0x04, METHOD_BUFFERED, FILE_WRITE_ACCESS)
+
+// DetectionType enum values
+#define R6AC_DETECT_PROCESS_INJECTION   1
+#define R6AC_DETECT_SUSPICIOUS_IMAGE    2
+#define R6AC_DETECT_EXTERNAL_MEMORY     3
+#define R6AC_DETECT_DMA_PATTERN         4
+#define R6AC_DETECT_HANDLE_STRIP        5
+#define R6AC_DETECT_KERNEL_ANOMALY      6
+
+typedef struct _R6AC_DETECTION_REPORT {
+    ULONG  ReportId;
+    ULONG  DetectionType;
+    ULONG  Confidence;       // 0 - 100
+    ULONG  ProcessId;
+    WCHAR  ProcessName[64];
+    WCHAR  ReasonCode[128];
+    LARGE_INTEGER Timestamp;
+} R6AC_DETECTION_REPORT, *PR6AC_DETECTION_REPORT;
+
+typedef struct _R6AC_STATUS {
+    BOOLEAN DriverActive;
+    ULONG   MonitoredPid;
+    ULONG   ReportCount;
+    ULONG   CallbacksRegistered;
+} R6AC_STATUS, *PR6AC_STATUS;

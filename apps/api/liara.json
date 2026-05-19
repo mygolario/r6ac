@@ -1,0 +1,17 @@
+{
+  "app": "r6ac-api",
+  "platform": "node",
+  "port": 3001,
+  "build": {
+    "args": {}
+  },
+  "healthCheck": {
+    "command": "wget -qO- http://localhost:3001/health || exit 1"
+  },
+  "disks": [
+    {
+      "name": "r6ac-api-storage",
+      "mountTo": "/app/storage"
+    }
+  ]
+}

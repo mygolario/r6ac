@@ -1,0 +1,55 @@
+name: Deploy Dashboard to Liara
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/dashboard/**'
+      - 'packages/ui/**'
+      - 'packages/i18n/**'
+      - '.github/workflows/deploy-dashboard.yml'
+
+jobs:
+  build-and-deploy:
+    name: Build and Deploy Dashboard
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+          
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Type check
+        run: pnpm --filter @r6ac/dashboard typecheck
+        
+      - name: Lint
+        run: pnpm --filter @r6ac/dashboard lint
+        
+      - name: Build
+        run: pnpm --filter @r6ac/dashboard build
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_WS_URL: ${{ secrets.VITE_WS_URL }}
+          
+      - name: Install Liara CLI
+        run: npm install -g @liara/cli
+        
+      - name: Deploy Dashboard to Liara
+        working-directory: apps/dashboard
+        env:
+          LIARA_TOKEN: ${{ secrets.LIARA_TOKEN }}
+        run: |
+          liara deploy \
+            --app r6ac-dashboard \
+            --port 80 \
+            --no-app-logs

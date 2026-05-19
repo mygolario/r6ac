@@ -1,0 +1,17 @@
+{
+  "loading": "Loading...",
+  "error": "An error occurred",
+  "save": "Save",
+  "cancel": "Cancel",
+  "confirm": "Confirm",
+  "delete": "Delete",
+  "edit": "Edit",
+  "status": {
+    "online": "Online",
+    "offline": "Offline",
+    "inMatch": "In Match",
+    "clean": "Clean",
+    "flagged": "Flagged",
+    "banned": "Banned"
+  }
+}

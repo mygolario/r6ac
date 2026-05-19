@@ -1,0 +1,33 @@
+[Version]
+Signature   = "$WINDOWS NT$"
+Class       = "System"
+ClassGuid   = {4D36E97D-E325-11CE-BFC1-08002BE10318}
+Provider    = "R6AC Tournament Platform"
+DriverVer   = 01/01/2026,1.0.0.0
+CatalogFile = R6AC.Driver.cat
+
+[Manufacturer]
+%ManufacturerName% = Standard,NTamd64
+
+[Standard.NTamd64]
+%DeviceName% = R6AC_Device, Root\R6AC
+
+[R6AC_Device.NT]
+CopyFiles = R6AC_CopyFiles
+
+[R6AC_CopyFiles]
+R6AC.Driver.sys
+
+[DestinationDirs]
+DefaultDestDir = 12
+
+[SourceDisksNames]
+1 = %DiskName%
+
+[SourceDisksFiles]
+R6AC.Driver.sys = 1
+
+[Strings]
+ManufacturerName = "R6AC Tournament Platform"
+DeviceName       = "R6AC Anti-Cheat Driver"
+DiskName         = "R6AC Installation Disk"

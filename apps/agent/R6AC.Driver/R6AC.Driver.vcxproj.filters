@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{12345678-1234-1234-1234-123456789012}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="shared">
+      <UniqueIdentifier>{87654321-4321-4321-4321-210987654321}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="inf">
+      <UniqueIdentifier>{55555555-5555-5555-5555-555555555555}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="shared\R6AC_Ioctl.h">
+      <Filter>shared</Filter>
+    </ClInclude>
+    <ClInclude Include="shared\WdkMock.h">
+      <Filter>shared</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DeviceIo.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DmaDetection.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Driver.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ImageLoadCallbacks.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\KernelUtils.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MemoryGuard.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ObjectCallbacks.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ProcessCallbacks.h">
+      <Filter>src</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\DeviceIo.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\DmaDetection.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Driver.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ImageLoadCallbacks.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\KernelUtils.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\MemoryGuard.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ObjectCallbacks.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ProcessCallbacks.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="inf\R6AC.Driver.inf">
+      <Filter>inf</Filter>
+    </None>
+  </ItemGroup>
+</Project>

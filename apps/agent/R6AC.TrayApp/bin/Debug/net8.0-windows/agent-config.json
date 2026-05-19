@@ -1,0 +1,28 @@
+{
+  "version": "1.0.0",
+  "apiBaseUrl": "https://api.r6ac.ir",
+  "scanIntervalSeconds": 5,
+  "reportSyncIntervalSeconds": 30,
+  "offlineMode": true,
+  "language": "fa",
+  "detection": {
+    "processDetection": true,
+    "windowDetection": true,
+    "usbDetection": true,
+    "networkDetection": true,
+    "driverDetection": true,
+    "behavioralDetection": true,
+    "gameIntegrityCheck": true,
+    "selfIntegrityCheck": true
+  },
+  "thresholds": {
+    "autoFlagConfidence": 0.75,
+    "autoKickConfidence": 0.92,
+    "behavioralWindowSeconds": 10,
+    "maxStraightLinePercent": 40,
+    "triggerBotMaxStdDevMs": 5.0
+  },
+  "electroLan": {
+    "whitelistedAdapterPrefixes": ["ElectroLAN", "TAP-Windows"]
+  }
+}
