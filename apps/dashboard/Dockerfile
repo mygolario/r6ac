@@ -28,8 +28,16 @@ RUN pnpm install --frozen-lockfile
 RUN pnpm --filter @r6ac/dashboard build
 
 # ──────────────────────────────────────────────
-FROM nginx:alpine AS runner
-COPY --from=builder /app/apps/dashboard/dist /usr/share/nginx/html
-COPY apps/dashboard/nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+# Use node:20-alpine (already cached on Liara) instead of nginx:alpine
+# nginx:alpine requires pulling from Docker Hub which is blocked from Iran servers
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+# Use Liara npm mirror to install serve
+RUN npm config set registry https://package-mirror.liara.ir/repository/npm/ && \
+    npm install -g serve
+
+COPY --from=builder /app/apps/dashboard/dist ./dist
+
+EXPOSE 3000
+CMD ["serve", "-s", "dist", "-l", "3000"]

@@ -1,11 +1,5 @@
 {
   "app": "r6ac-dashboard",
   "platform": "docker",
-  "port": 80,
-  "build": {
-    "args": {
-      "VITE_API_BASE_URL": "https://api.r6ac.ir",
-      "VITE_WS_URL": "wss://api.r6ac.ir"
-    }
-  }
+  "port": 3000
 }
