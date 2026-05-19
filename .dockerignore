@@ -1,0 +1,50 @@
+# Version control
+.git
+.gitignore
+.github
+
+# Build caches
+.turbo
+**/.turbo
+
+# Dependencies - these are reinstalled in Docker
+node_modules
+**/node_modules
+
+# Build outputs - rebuilt in Docker
+**/dist
+apps/agent
+
+# Local dev files
+**/.env
+**/.env.local
+**/.env.development
+*.log
+
+# Editor / OS
+.vscode
+.idea
+*.DS_Store
+Thumbs.db
+
+# Test files
+**/tests
+**/*.test.ts
+**/*.spec.ts
+
+# Docs
+docs
+
+# C# binaries / compiled files
+**/*.dll
+**/*.exe
+**/*.pdb
+**/*.obj
+**/*.bin
+
+# Misc
+*.md
+*.zip
+*.tar.gz
+vazirmatn-v33.003
+query
