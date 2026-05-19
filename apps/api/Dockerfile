@@ -27,10 +27,7 @@ RUN pnpm --filter @r6ac/api build
 FROM node:20-alpine AS runner
 WORKDIR /app
 
-# Install curl for health checks
-RUN apk add --no-cache curl
-
-# Create non-root user
+# Create non-root user (wget is already available in node:20-alpine)
 RUN addgroup -S r6ac && adduser -S r6ac -G r6ac
 
 # Replicate workspace layout so symlinks resolve correctly
@@ -46,7 +43,8 @@ WORKDIR /app/apps/api
 USER r6ac
 EXPOSE 3001
 
+# Use wget which is built into node:20-alpine — no apk needed
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD curl -f http://localhost:3001/health || exit 1
+  CMD wget -qO- http://localhost:3001/health || exit 1
 
 CMD ["node", "dist/index.js"]
