@@ -4,8 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShieldAlert, Search, Eye, Check, X, SearchCheck, Calendar, AlertTriangle } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useReports, useReviewReport, usePlayers } from '../hooks/useApi';
-import { mockMatches } from '../lib/mock-data';
+import { useReports, useReviewReport, usePlayers, useLiveMatches } from '../hooks/useApi';
 
 // Stagger parent container
 const containerVariants = {
@@ -47,10 +46,12 @@ export const ReportsPage = () => {
   // API Hooks
   const { data: reportsData } = useReports({ page: 1, limit: 100, reviewStatus: statusFilter });
   const { data: playersData } = usePlayers({ page: 1, limit: 100 });
+  const { data: liveMatchesData } = useLiveMatches();
   const reviewMutation = useReviewReport();
 
   const reportsList = reportsData?.reports || [];
   const playersList = playersData?.players || [];
+  const liveMatches = liveMatchesData || [];
 
   const filteredReports = reportsList.filter((report: any) => {
     const player = playersList.find((p: any) => p.id === report.playerId);
@@ -235,7 +236,7 @@ export const ReportsPage = () => {
               {filteredReports.length > 0 ? (
                 filteredReports.map((report: any) => {
                   const player = playersList.find((p: any) => p.id === report.playerId);
-                  const match = mockMatches.find((m) => m.id === report.matchId);
+                  const match = liveMatches.find((m: any) => m.id === report.matchId);
                   const initials = player ? (isRtl && player.usernameFA ? player.usernameFA : player.username).substring(0, 2) : '??';
 
                   let confColor = 'bg-success';
@@ -264,7 +265,7 @@ export const ReportsPage = () => {
                         )}
                       </td>
                       <td className="p-4 text-start font-mono text-xs text-text-secondary font-mono">
-                        {match ? `${match.teamAName} vs ${match.teamBName}` : report.matchId}
+                        {match ? `${match.teamAName} vs ${match.teamBName}` : (isRtl ? 'شناسه بازی: ' : 'Match ID: ') + report.matchId.substring(0, 8)}
                       </td>
                       <td className="p-4 text-start font-bold font-mono text-accent font-mono">
                         {report.detectionType}

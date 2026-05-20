@@ -4,7 +4,18 @@ import { FastifyInstance } from 'fastify';
 import { AuthRepository } from '../repositories/auth.repository';
 import { UserRole } from '../types';
 
+const failedLoginAttempts = new Map<string, { count: number; lockedUntil?: Date }>();
+
 export class AuthService {
+  static recordFailedLogin(ip: string) {
+    const current = failedLoginAttempts.get(ip) || { count: 0 };
+    current.count += 1;
+    if (current.count >= 5) {
+      current.lockedUntil = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes lock
+    }
+    failedLoginAttempts.set(ip, current);
+  }
+
   static async register(data: { username: string; usernameFA?: string; email: string; password: string }) {
     const existingEmail = await AuthRepository.findUserByEmail(data.email);
     if (existingEmail) {
@@ -30,9 +41,28 @@ export class AuthService {
     };
   }
 
-  static async login(fastify: FastifyInstance, data: { email: string; password: string }) {
-    const user = await AuthRepository.findUserByEmail(data.email);
+  static async login(fastify: FastifyInstance, data: { email?: string; username?: string; password: string }, ip?: string) {
+    const clientIp = ip || 'unknown_ip';
+    const attemptRecord = failedLoginAttempts.get(clientIp);
+    if (attemptRecord && attemptRecord.lockedUntil && attemptRecord.lockedUntil > new Date()) {
+      throw { statusCode: 429, message: 'Too many failed login attempts. Please try again later.', messageFA: 'تعداد تلاش‌های ورود ناموفق بیش از حد مجاز است. لطفاً بعداً تلاش کنید.' };
+    }
+
+    const identifier = data.email || data.username;
+    if (!identifier) {
+      throw { statusCode: 400, message: 'Email or username is required.', messageFA: 'نام کاربری یا ایمیل الزامی است.' };
+    }
+
+    let user: any = null;
+    try {
+      user = await AuthRepository.findUserByUsernameOrEmail(identifier);
+    } catch (err) {
+      AuthService.recordFailedLogin(clientIp);
+      throw { statusCode: 401, message: 'Invalid credentials or database offline.', messageFA: 'اطلاعات ورود نادرست است یا پایگاه داده در دسترس نیست.' };
+    }
+
     if (!user) {
+      AuthService.recordFailedLogin(clientIp);
       throw { statusCode: 401, message: 'Invalid credentials.', messageFA: 'اطلاعات ورود نادرست است.' };
     }
 
@@ -42,8 +72,12 @@ export class AuthService {
 
     const isValid = await bcrypt.compare(data.password, user.passwordHash);
     if (!isValid) {
+      AuthService.recordFailedLogin(clientIp);
       throw { statusCode: 401, message: 'Invalid credentials.', messageFA: 'اطلاعات ورود نادرست است.' };
     }
+
+    failedLoginAttempts.delete(clientIp);
+
 
     const payload = {
       id: user.id,

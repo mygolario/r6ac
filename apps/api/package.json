@@ -12,7 +12,9 @@
     "lint:fix": "eslint . --ext ts --fix",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:integration": "vitest run tests/integration/",
+    "test:all": "vitest run"
   },
   "dependencies": {
     "@fastify/cookie": "^9.3.1",

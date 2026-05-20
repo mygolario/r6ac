@@ -1,4 +1,4 @@
-import { eq, and, count, asc } from 'drizzle-orm';
+import { eq, and, count, asc, or } from 'drizzle-orm';
 import { tournaments, tournamentTeams, matches, teams } from '../db/schema';
 import { db } from '../plugins/db';
 
@@ -148,5 +148,45 @@ export class TournamentRepository {
   static async findMatchById(matchId: string) {
     const [m] = await db.select().from(matches).where(eq(matches.id, matchId)).limit(1);
     return m;
+  }
+
+  static async findLiveMatches() {
+    const matchList = await db
+      .select({
+        id: matches.id,
+        tournamentId: matches.tournamentId,
+        teamAId: matches.teamAId,
+        teamBId: matches.teamBId,
+        status: matches.status,
+        round: matches.round,
+        scoreA: matches.scoreA,
+        scoreB: matches.scoreB,
+        startedAt: matches.startedAt,
+        endedAt: matches.endedAt,
+        electroSessionCode: matches.electroSessionCode,
+        teamAName: teams.name,
+        teamANameFa: teams.nameFa,
+      })
+      .from(matches)
+      .leftJoin(teams, eq(matches.teamAId, teams.id))
+      .where(or(eq(matches.status, 'live'), eq(matches.status, 'paused')));
+
+    // Get team B names
+    const fullMatches = await Promise.all(
+      matchList.map(async (m) => {
+        const [tb] = await db
+          .select({ name: teams.name, nameFa: teams.nameFa })
+          .from(teams)
+          .where(eq(teams.id, m.teamBId))
+          .limit(1);
+        return {
+          ...m,
+          teamBName: tb?.name,
+          teamBNameFa: tb?.nameFa,
+        };
+      })
+    );
+
+    return fullMatches;
   }
 }

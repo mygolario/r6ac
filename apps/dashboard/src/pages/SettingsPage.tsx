@@ -1,16 +1,50 @@
 import { DetectionType } from '@r6ac/types';
 import { Card, CardContent, CardHeader, CardTitle, Badge, Button } from '@r6ac/ui';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Users, Image, Sliders, Check, Plus, Trash2 } from 'lucide-react';
-import React, { useState } from 'react';
+import { Shield, Users, Image, Sliders, Check, Plus, Trash2, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  useSettings,
+  useUpdatePlatformSettings,
+  useUpdateTournamentSettings,
+  useUpdateAntiCheatSettings,
+} from '../hooks/useApi';
 
 // Detection Type list
 const DETECTION_TYPES: DetectionType[] = [
   'AIMBOT', 'WALLHACK', 'RADAR_HACK', 'TRIGGER_BOT', 'NO_RECOIL', 'SPEED_HACK',
   'SPOOFER', 'DMA_CARD', 'KMBOX', 'ARDUINO_INPUT', 'DUAL_PC_STREAM', 'MACRO_PATTERN',
-  'STATISTICAL_OUTLIER'
+  'STATISTICAL_OUTLIER',
 ];
+
+// Toast notification component
+const SaveToast = ({ status, isRtl }: { status: 'idle' | 'saving' | 'success' | 'error'; isRtl: boolean }) => {
+  if (status === 'idle') return null;
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -10, scale: 0.95 }}
+        className={`flex items-center gap-2 text-xs font-semibold font-vazir px-3 py-2 rounded-lg border ${
+          status === 'saving'
+            ? 'bg-accent/10 border-accent/30 text-accent'
+            : status === 'success'
+            ? 'bg-success/10 border-success/30 text-success'
+            : 'bg-danger/10 border-danger/30 text-danger'
+        }`}
+      >
+        {status === 'saving' && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+        {status === 'success' && <CheckCircle className="w-3.5 h-3.5" />}
+        {status === 'error' && <AlertCircle className="w-3.5 h-3.5" />}
+        {status === 'saving' && (isRtl ? 'در حال ذخیره...' : 'Saving...')}
+        {status === 'success' && (isRtl ? 'تغییرات ذخیره شد ✓' : 'Saved successfully ✓')}
+        {status === 'error' && (isRtl ? 'خطا در ذخیره‌سازی' : 'Failed to save')}
+      </motion.div>
+    </AnimatePresence>
+  );
+};
 
 export const SettingsPage = () => {
   const { t, i18n } = useTranslation(['dashboard', 'common']);
@@ -18,14 +52,24 @@ export const SettingsPage = () => {
 
   const [activeTab, setActiveTab] = useState<'general' | 'tournament' | 'anticheat' | 'admins'>('general');
 
+  // Fetch current settings from API
+  const { data: settingsData, isLoading: settingsLoading } = useSettings();
+  const updatePlatform = useUpdatePlatformSettings();
+  const updateTournament = useUpdateTournamentSettings();
+  const updateAntiCheat = useUpdateAntiCheatSettings();
+
   // General Settings State
   const [platformName, setPlatformName] = useState('R6AC Anti-Cheat');
   const [langDefault, setLangDefault] = useState<'fa' | 'en'>('fa');
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const [generalStatus, setGeneralStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
 
   // Tournament Settings State
   const [defaultMaxTeams, setDefaultMaxTeams] = useState(16);
   const [defaultFormat, setDefaultFormat] = useState('BO3');
   const [feeCurrency, setFeeCurrency] = useState<'IRR' | 'USDT'>('IRR');
+  const [tournamentStatus, setTournamentStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
 
   // Anti-Cheat State
   const [autoFlag, setAutoFlag] = useState(0.75);
@@ -34,13 +78,44 @@ export const SettingsPage = () => {
   const [enabledDetections, setEnabledDetections] = useState<Record<DetectionType, boolean>>(
     DETECTION_TYPES.reduce((acc, dt) => ({ ...acc, [dt]: true }), {} as Record<DetectionType, boolean>)
   );
+  const [antiCheatStatus, setAntiCheatStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
 
-  // Admin Account List state
-  const [adminsList, setAdminsList] = useState([
-    { id: 'adm_1', username: 'ario_admin', role: 'super_admin', name: 'آریو' },
-    { id: 'adm_2', username: 'mamad_ref', role: 'tournament_admin', name: 'محمد' },
-    { id: 'adm_3', username: 'reza_sec', role: 'tournament_admin', name: 'رضا' },
+  // Admin Account List state (fetched from players API)
+  const [adminsList] = useState([
+    { id: 'adm_1', username: 'admin', role: 'super_admin', name: 'Admin' },
   ]);
+
+  // Sync state from API when settings load
+  useEffect(() => {
+    if (settingsData) {
+      const p = settingsData.platform;
+      const tr = settingsData.tournament;
+      const ac = settingsData.antiCheat;
+
+      if (p) {
+        setPlatformName(p.platformName ?? 'R6AC Anti-Cheat');
+        setLangDefault(p.defaultLanguage ?? 'fa');
+        setLogoUrl(p.logoUrl ?? null);
+      }
+      if (tr) {
+        setDefaultMaxTeams(tr.defaultMaxTeams ?? 16);
+        setDefaultFormat(tr.defaultMatchFormat ?? 'BO3');
+        setFeeCurrency(tr.defaultCurrency ?? 'IRR');
+      }
+      if (ac) {
+        setAutoFlag(ac.autoFlagThreshold ?? 0.75);
+        setAutoKick(ac.autoKickThreshold ?? 0.92);
+        setAutoKickEnabled(ac.autoKickEnabled ?? true);
+        if (ac.enabledDetectionTypes) {
+          const updatedMap = DETECTION_TYPES.reduce(
+            (acc, dt) => ({ ...acc, [dt]: ac.enabledDetectionTypes.includes(dt) }),
+            {} as Record<DetectionType, boolean>
+          );
+          setEnabledDetections(updatedMap);
+        }
+      }
+    }
+  }, [settingsData]);
 
   const handleToggleDetection = (type: DetectionType) => {
     setEnabledDetections((prev) => ({
@@ -49,20 +124,83 @@ export const SettingsPage = () => {
     }));
   };
 
-  const handleAddAdmin = () => {
-    const newAdmin = {
-      id: `adm_${Date.now()}`,
-      username: 'new_admin',
-      role: 'tournament_admin' as const,
-      name: isRtl ? 'ادمین جدید' : 'New Admin',
+  // Logo upload handler
+  const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const dataUrl = evt.target?.result as string;
+      setLogoUrl(dataUrl);
     };
-    setAdminsList((prev) => [...prev, newAdmin]);
+    reader.readAsDataURL(file);
   };
 
-  const handleRemoveAdmin = (id: string) => {
-    if (adminsList.length <= 1) return; // safety check
-    setAdminsList((prev) => prev.filter((adm) => adm.id !== id));
+  // Save General Settings
+  const handleSaveGeneral = async () => {
+    setGeneralStatus('saving');
+    try {
+      await updatePlatform.mutateAsync({
+        platformName,
+        defaultLanguage: langDefault,
+        logoUrl,
+      });
+      // Apply language change globally
+      i18n.changeLanguage(langDefault);
+      document.documentElement.dir = langDefault === 'fa' ? 'rtl' : 'ltr';
+      document.documentElement.lang = langDefault;
+      setGeneralStatus('success');
+      setTimeout(() => setGeneralStatus('idle'), 2500);
+    } catch {
+      setGeneralStatus('error');
+      setTimeout(() => setGeneralStatus('idle'), 2500);
+    }
   };
+
+  // Save Tournament Settings
+  const handleSaveTournament = async () => {
+    setTournamentStatus('saving');
+    try {
+      await updateTournament.mutateAsync({
+        defaultMaxTeams,
+        defaultMatchFormat: defaultFormat,
+        defaultCurrency: feeCurrency,
+      });
+      setTournamentStatus('success');
+      setTimeout(() => setTournamentStatus('idle'), 2500);
+    } catch {
+      setTournamentStatus('error');
+      setTimeout(() => setTournamentStatus('idle'), 2500);
+    }
+  };
+
+  // Save Anti-Cheat Settings
+  const handleSaveAntiCheat = async () => {
+    setAntiCheatStatus('saving');
+    try {
+      const enabledTypes = DETECTION_TYPES.filter((dt) => enabledDetections[dt]);
+      await updateAntiCheat.mutateAsync({
+        autoFlagThreshold: autoFlag,
+        autoKickThreshold: autoKick,
+        autoKickEnabled,
+        enabledDetectionTypes: enabledTypes,
+      });
+      setAntiCheatStatus('success');
+      setTimeout(() => setAntiCheatStatus('idle'), 2500);
+    } catch {
+      setAntiCheatStatus('error');
+      setTimeout(() => setAntiCheatStatus('idle'), 2500);
+    }
+  };
+
+  if (settingsLoading) {
+    return (
+      <div className="flex items-center justify-center h-64 gap-3 text-text-secondary font-vazir">
+        <Loader2 className="w-6 h-6 animate-spin text-accent" />
+        <span>{isRtl ? 'در حال بارگذاری تنظیمات...' : 'Loading settings...'}</span>
+      </div>
+    );
+  }
 
   return (
     <motion.div
@@ -162,23 +300,57 @@ export const SettingsPage = () => {
                     <label className="text-xs font-semibold text-text-secondary font-vazir">
                       {t('settings.logoUpload')}
                     </label>
-                    <div className="border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center justify-center gap-3 bg-surface-2/20">
-                      <div className="p-3 bg-accent/10 border border-accent/20 rounded-full text-accent">
-                        <Image className="w-6 h-6" />
-                      </div>
-                      <div className="text-center">
-                        <p className="text-sm font-semibold text-text-primary font-vazir">
-                          {t('settings.logoUploadDesc')}
-                        </p>
-                        <p className="text-xs text-text-secondary mt-1">PNG, JPG up to 2MB</p>
-                      </div>
+                    {/* Hidden actual file input */}
+                    <input
+                      ref={logoInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/jpg,image/svg+xml"
+                      className="hidden"
+                      onChange={handleLogoChange}
+                    />
+                    <div
+                      className="border-2 border-dashed border-border rounded-xl p-8 flex flex-col items-center justify-center gap-3 bg-surface-2/20 cursor-pointer hover:border-accent/40 hover:bg-accent/5 transition-all duration-200"
+                      onClick={() => logoInputRef.current?.click()}
+                    >
+                      {logoUrl ? (
+                        <div className="flex flex-col items-center gap-2">
+                          <img
+                            src={logoUrl}
+                            alt="Platform logo"
+                            className="h-16 object-contain rounded-lg border border-border"
+                          />
+                          <p className="text-xs text-success font-vazir">
+                            {isRtl ? 'لوگو بارگذاری شد. برای تغییر کلیک کنید.' : 'Logo uploaded. Click to change.'}
+                          </p>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="p-3 bg-accent/10 border border-accent/20 rounded-full text-accent">
+                            <Image className="w-6 h-6" />
+                          </div>
+                          <div className="text-center">
+                            <p className="text-sm font-semibold text-text-primary font-vazir">
+                              {t('settings.logoUploadDesc')}
+                            </p>
+                            <p className="text-xs text-text-secondary mt-1">PNG, JPG up to 2MB</p>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-border flex items-center justify-end">
-                  <Button variant="primary" className="font-vazir text-xs">
-                    {isRtl ? 'ذخیره تغییرات عمومی' : 'Save General Settings'}
+                <div className="pt-4 border-t border-border flex items-center justify-end gap-3">
+                  <SaveToast status={generalStatus} isRtl={isRtl} />
+                  <Button
+                    variant="primary"
+                    className="font-vazir text-xs"
+                    onClick={handleSaveGeneral}
+                    disabled={generalStatus === 'saving'}
+                  >
+                    {generalStatus === 'saving'
+                      ? (isRtl ? 'در حال ذخیره...' : 'Saving...')
+                      : (isRtl ? 'ذخیره تغییرات عمومی' : 'Save General Settings')}
                   </Button>
                 </div>
               </CardContent>
@@ -252,9 +424,17 @@ export const SettingsPage = () => {
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-border flex items-center justify-end">
-                  <Button variant="primary" className="font-vazir text-xs">
-                    {isRtl ? 'ذخیره قوانین تورنمنت' : 'Save Tournament Settings'}
+                <div className="pt-4 border-t border-border flex items-center justify-end gap-3">
+                  <SaveToast status={tournamentStatus} isRtl={isRtl} />
+                  <Button
+                    variant="primary"
+                    className="font-vazir text-xs"
+                    onClick={handleSaveTournament}
+                    disabled={tournamentStatus === 'saving'}
+                  >
+                    {tournamentStatus === 'saving'
+                      ? (isRtl ? 'در حال ذخیره...' : 'Saving...')
+                      : (isRtl ? 'ذخیره قوانین تورنمنت' : 'Save Tournament Settings')}
                   </Button>
                 </div>
               </CardContent>
@@ -331,6 +511,8 @@ export const SettingsPage = () => {
                       className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent ${
                         autoKickEnabled ? 'bg-success' : 'bg-border'
                       }`}
+                      role="switch"
+                      aria-checked={autoKickEnabled}
                     >
                       <span
                         className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
@@ -376,9 +558,17 @@ export const SettingsPage = () => {
                     })}
                   </div>
 
-                  <div className="pt-6 border-t border-border flex items-center justify-end mt-6">
-                    <Button variant="primary" className="font-vazir text-xs">
-                      {isRtl ? 'ذخیره پیکربندی آنتی‌چیت' : 'Save Anti-Cheat config'}
+                  <div className="pt-6 border-t border-border flex items-center justify-end mt-6 gap-3">
+                    <SaveToast status={antiCheatStatus} isRtl={isRtl} />
+                    <Button
+                      variant="primary"
+                      className="font-vazir text-xs"
+                      onClick={handleSaveAntiCheat}
+                      disabled={antiCheatStatus === 'saving'}
+                    >
+                      {antiCheatStatus === 'saving'
+                        ? (isRtl ? 'در حال ذخیره...' : 'Saving...')
+                        : (isRtl ? 'ذخیره پیکربندی آنتی‌چیت' : 'Save Anti-Cheat config')}
                     </Button>
                   </div>
                 </CardContent>
@@ -394,16 +584,6 @@ export const SettingsPage = () => {
                   <Users className="w-5 h-5 text-accent" />
                   {isRtl ? 'حساب‌های ادمین و نقش‌ها' : 'Admin Accounts & Roles'}
                 </CardTitle>
-
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleAddAdmin}
-                  className="font-vazir text-xs flex items-center gap-1.5"
-                >
-                  <Plus className="w-4 h-4" />
-                  {t('settings.addAdmin')}
-                </Button>
               </CardHeader>
               <CardContent className="p-4 space-y-3">
                 {adminsList.map((adm) => (
@@ -413,7 +593,7 @@ export const SettingsPage = () => {
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center font-bold text-accent">
-                        {adm.name.substring(0, 1)}
+                        {adm.name.substring(0, 1).toUpperCase()}
                       </div>
                       <div>
                         <span className="font-bold text-text-primary block font-vazir leading-tight">
@@ -427,18 +607,14 @@ export const SettingsPage = () => {
                       <Badge variant={adm.role === 'super_admin' ? 'banned' : 'flagged'}>
                         {adm.role === 'super_admin' ? (isRtl ? 'مدیر کل' : 'SUPER ADMIN') : (isRtl ? 'مدیر تورنمنت' : 'TOURNAMENT ADMIN')}
                       </Badge>
-                      {adminsList.length > 1 && (
-                        <button
-                          onClick={() => handleRemoveAdmin(adm.id)}
-                          className="p-1.5 rounded-md text-text-secondary hover:text-danger hover:bg-danger/5 transition-all"
-                          title="حذف ادمین"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
                     </div>
                   </div>
                 ))}
+                <p className="text-xs text-text-secondary font-vazir pt-2">
+                  {isRtl
+                    ? 'برای افزودن ادمین جدید، از اسکریپت create-admin استفاده کنید.'
+                    : 'To add a new admin, use the create-admin script on the server.'}
+                </p>
               </CardContent>
             </Card>
           )}

@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "apiBaseUrl": "https://api.r6ac.ir",
+  "apiBaseUrl": "https://r6ac-api.liara.run",
   "scanIntervalSeconds": 5,
   "reportSyncIntervalSeconds": 30,
   "offlineMode": true,

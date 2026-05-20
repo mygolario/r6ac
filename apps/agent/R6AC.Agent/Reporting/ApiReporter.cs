@@ -98,17 +98,48 @@ public class ApiReporter
             return false;
         }
 
+        // Normalize detectionType: API only accepts the enum values from the schema
+        var allowedTypes = new HashSet<string>
+        {
+            "AIMBOT","WALLHACK","RADAR_HACK","TRIGGER_BOT","NO_RECOIL","SPEED_HACK",
+            "SPOOFER","DMA_CARD","KMBOX","ARDUINO_INPUT","DUAL_PC_STREAM","MACRO_PATTERN","STATISTICAL_OUTLIER"
+        };
+
+        var detectionType = report.DetectionType;
+        if (!allowedTypes.Contains(detectionType))
+        {
+            // Map non-enum types to closest match, or skip CLEAN reports
+            if (detectionType == "CLEAN" || detectionType == "SESSION_ANOMALY")
+                detectionType = "STATISTICAL_OUTLIER";
+            else if (detectionType.StartsWith("KERNEL_"))
+                detectionType = "AIMBOT"; // kernel-level detections are high severity
+            else
+                detectionType = "STATISTICAL_OUTLIER";
+        }
+
+        // Build the payload matching the server's createReportSchema
+        var payload = new
+        {
+            playerId = report.PlayerId,
+            matchId = report.MatchId,
+            detectionType,
+            confidence = (double)report.Confidence,
+            reasonCode = report.ReasonCode,
+            evidence = report.EvidenceJson,
+        };
+
         try
         {
             return await _retryPipeline.ExecuteAsync(async state =>
             {
-                var response = await _httpClient.PostAsJsonAsync("/api/v1/reports", report, state);
+                var response = await _httpClient.PostAsJsonAsync("/api/v1/reports/agent", payload, state);
                 if (response.IsSuccessStatusCode)
                 {
                     Log.Information("Successfully synced report {ReportId} to server.", report.Id);
                     return true;
                 }
-                Log.Warning("Server returned status {StatusCode} when syncing report {ReportId}.", response.StatusCode, report.Id);
+                var body = await response.Content.ReadAsStringAsync(state);
+                Log.Warning("Server returned {StatusCode} when syncing report {ReportId}. Body: {Body}", response.StatusCode, report.Id, body);
                 return false;
             }, ct);
         }

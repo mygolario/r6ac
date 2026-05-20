@@ -17,7 +17,7 @@ const authRoutes: FastifyPluginAsync = async (fastify) => {
 
   fastify.post('/login', async (request, reply) => {
     const data = loginSchema.parse(request.body);
-    const result = await AuthService.login(fastify, data);
+    const result = await AuthService.login(fastify, data, request.ip);
 
     reply.setCookie('r6ac_refresh_token', result.refreshToken, {
       path: '/',

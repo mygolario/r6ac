@@ -15,6 +15,17 @@ const tournamentRoutes: FastifyPluginAsync = async (fastify) => {
     });
   });
 
+  fastify.get('/matches/live', async (request, reply) => {
+    const result = await TournamentService.getLiveMatches();
+
+    return reply.status(200).send({
+      success: true,
+      data: result,
+      meta: { timestamp: new Date().toISOString() },
+      error: null,
+    });
+  });
+
   fastify.post(
     '/',
     { onRequest: [fastify.requireRoles(['tournament_admin', 'super_admin'])] },

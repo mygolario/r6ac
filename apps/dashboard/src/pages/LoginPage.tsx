@@ -113,6 +113,7 @@ export const LoginPage = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   className="font-mono text-left"
                   dir="ltr"
+                  autoComplete="username"
                 />
               </div>
 
@@ -127,6 +128,7 @@ export const LoginPage = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   className="font-mono text-left"
                   dir="ltr"
+                  autoComplete="current-password"
                 />
               </div>
 

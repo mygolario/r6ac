@@ -9,9 +9,13 @@ export const registerSchema = z.object({
 });
 
 export const loginSchema = z.object({
-  email: z.string().email(),
+  email: z.string().email().optional(),
+  username: z.string().optional(),
   password: z.string().min(8),
+}).refine((data) => data.email || data.username, {
+  message: 'Either email or username is required.',
 });
+
 
 // Player Schemas
 export const getPlayersQuerySchema = z.object({

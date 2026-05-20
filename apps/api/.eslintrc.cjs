@@ -1,5 +1,6 @@
 module.exports = {
   extends: ['../../packages/config/eslint.config.js'],
+  ignorePatterns: ['dist', 'node_modules'],
   rules: {
     '@typescript-eslint/no-extraneous-class': 'off',
     '@typescript-eslint/no-explicit-any': 'off',

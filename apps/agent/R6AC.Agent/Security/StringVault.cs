@@ -23,7 +23,7 @@ public static class StringVault
 
     private static readonly Dictionary<VaultKey, byte[]> Vault = new()
     {
-        [VaultKey.ApiBaseUrl] = Xor("http://localhost:4000"),
+        [VaultKey.ApiBaseUrl] = Xor("https://r6ac-api.liara.run"),
         [VaultKey.DeviceDriverPath] = Xor(@"\\.\R6ACDriver"),
         [VaultKey.ProcessBlocklistKey] = Xor("R6AC_BLOCKLIST_KEY_2026"),
         [VaultKey.ManifestHmacKey] = Xor("R6AC_MANIFEST_SECRET_KEY_32BYTES"),

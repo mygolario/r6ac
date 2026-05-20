@@ -1,7 +1,9 @@
 import { QueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '../stores/auth-store';
 
-const WS_URL = 'ws://localhost:4000/ws';
+const WS_URL = import.meta.env.VITE_WS_URL 
+  ? `${import.meta.env.VITE_WS_URL}/ws` 
+  : 'ws://localhost:4000/ws';
 
 let ws: WebSocket | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -48,12 +50,14 @@ function handleWsEvent(msg: { type: string; payload: any; timestamp?: string }, 
     case 'report:reviewed':
       queryClient.invalidateQueries({ queryKey: ['reports'] });
       queryClient.invalidateQueries({ queryKey: ['players'] });
+      queryClient.invalidateQueries({ queryKey: ['live-matches'] });
       break;
 
     case 'match:updated':
     case 'match:kick_player':
       queryClient.invalidateQueries({ queryKey: ['matches'] });
       queryClient.invalidateQueries({ queryKey: ['tournaments'] });
+      queryClient.invalidateQueries({ queryKey: ['live-matches'] });
       break;
 
     case 'player:ban_status_changed':

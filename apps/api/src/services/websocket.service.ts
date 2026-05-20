@@ -26,7 +26,10 @@ export class WebSocketService {
   static async init(fastify: FastifyInstance) {
     if (!this.isSubscribed && fastify.redisSub) {
       try {
-        await fastify.redisSub.subscribe(this.CHANNEL);
+        await Promise.race([
+          fastify.redisSub.subscribe(this.CHANNEL),
+          new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 500))
+        ]);
         fastify.redisSub.on('message', (channel: string, message: string) => {
           if (channel === this.CHANNEL) {
             try {

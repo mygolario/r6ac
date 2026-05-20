@@ -29,7 +29,10 @@ export async function healthRoutes(fastify: FastifyInstance): Promise<void> {
     }
 
     try {
-      await fastify.redis.ping();
+      await Promise.race([
+        fastify.redis.ping(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 500))
+      ]);
     } catch {
       redisStatus = 'error';
     }

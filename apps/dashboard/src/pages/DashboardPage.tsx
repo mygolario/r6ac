@@ -4,8 +4,7 @@ import { Users, Trophy, AlertTriangle, Shield, Clock, TrendingUp } from 'lucide-
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { usePlayers, useTournaments, useReports } from '../hooks/useApi';
-import { mockMatches, mockTeams } from '../lib/mock-data';
+import { usePlayers, useTournaments, useReports, useLiveMatches } from '../hooks/useApi';
 
 // Custom Count-up Component
 const AnimatedCounter = ({ value, isRtl }: { value: number; isRtl: boolean }) => {
@@ -26,24 +25,6 @@ const AnimatedCounter = ({ value, isRtl }: { value: number; isRtl: boolean }) =>
   }, [value, count, rounded]);
 
   return <>{displayValue}</>;
-};
-
-// Live Timer for Matches
-const LiveTimer = ({ durationSeconds }: { durationSeconds: number }) => {
-  const [seconds, setSeconds] = useState(durationSeconds);
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSeconds((prev) => prev + 1);
-    }, 1000);
-    return () => clearInterval(interval);
-  }, []);
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  return (
-    <span>
-      {String(minutes).padStart(2, '0')}:{String(remainingSeconds).padStart(2, '0')}
-    </span>
-  );
 };
 
 // Standard Jalali Formatter
@@ -80,18 +61,20 @@ export const DashboardPage = () => {
   const { data: playersData } = usePlayers({ page: 1, limit: 100 });
   const { data: tournamentsData } = useTournaments({ page: 1, limit: 10 });
   const { data: reportsData } = useReports({ page: 1, limit: 15 });
+  const { data: liveMatchesData } = useLiveMatches();
 
   const playersList = playersData?.players || [];
   const tournamentsList = tournamentsData?.tournaments || [];
   const reportsList = reportsData?.reports || [];
+  const liveMatches = liveMatchesData || [];
 
   // Stats Data
-  const activePlayersCount = playersList.filter((p: any) => p.banStatus !== 'banned').length || 38;
-  const activeTournamentsCount = tournamentsList.filter((t: any) => t.status === 'active').length || 1;
+  const activePlayersCount = playersList.filter((p: any) => p.banStatus !== 'banned').length;
+  const activeTournamentsCount = tournamentsList.filter((t: any) => t.status === 'active').length;
   const todayReportsCount = reportsList.filter(
     (r: any) => new Date(r.createdAt).toDateString() === new Date().toDateString()
-  ).length || 4;
-  const registeredTeamsCount = mockTeams.length;
+  ).length;
+  const registeredTeamsCount = new Set(playersList.map((p: any) => p.teamId).filter(Boolean)).size;
 
   return (
     <motion.div
@@ -225,61 +208,63 @@ export const DashboardPage = () => {
             </div>
           </CardHeader>
           <CardContent className="flex-1 overflow-y-auto p-4 space-y-3 font-vazir">
-            {mockMatches.slice(0, 4).map((match) => {
-              const teamAInitials = (isRtl ? match.teamANameFA : match.teamAName).substring(0, 2);
-              const teamBInitials = (isRtl ? match.teamBNameFA : match.teamBName).substring(0, 2);
+            {liveMatches.length > 0 ? (
+              liveMatches.slice(0, 4).map((match: any) => {
+                const teamAName = isRtl ? (match.teamANameFa || match.teamAName) : match.teamAName;
+                const teamBName = isRtl ? (match.teamBNameFa || match.teamBName) : match.teamBName;
+                const teamAInitials = (teamAName || 'T1').substring(0, 2);
+                const teamBInitials = (teamBName || 'T2').substring(0, 2);
 
-              return (
-                <div
-                  key={match.id}
-                  className="flex items-center justify-between p-3 rounded-lg border border-border bg-surface-2/40 hover:bg-surface-2 transition-colors duration-200"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex -space-x-2 RTL:-space-x-reverse">
-                      <Avatar initials={teamAInitials} size="sm" className="ring-2 ring-border font-mono" />
-                      <Avatar initials={teamBInitials} size="sm" className="ring-2 ring-border font-mono" />
+                return (
+                  <div
+                    key={match.id}
+                    className="flex items-center justify-between p-3 rounded-lg border border-border bg-surface-2/40 hover:bg-surface-2 transition-colors duration-200"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="flex -space-x-2 RTL:-space-x-reverse">
+                        <Avatar initials={teamAInitials} size="sm" className="ring-2 ring-border font-mono" />
+                        <Avatar initials={teamBInitials} size="sm" className="ring-2 ring-border font-mono" />
+                      </div>
+                      <div>
+                        <div className="text-sm font-semibold flex items-center gap-1.5 font-vazir">
+                          <span>{teamAName}</span>
+                          <span className="text-xs text-text-secondary font-mono">VS</span>
+                          <span>{teamBName}</span>
+                        </div>
+                        <div className="text-xs text-text-secondary flex items-center gap-1 mt-0.5 font-mono">
+                          <Clock className="w-3.5 h-3.5 text-text-secondary" />
+                          <span>{isRtl ? 'در حال برگزاری' : 'In Progress'}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="text-sm font-semibold flex items-center gap-1.5 font-vazir">
-                        <span>{isRtl ? match.teamANameFA : match.teamAName}</span>
-                        <span className="text-xs text-text-secondary font-mono">VS</span>
-                        <span>{isRtl ? match.teamBNameFA : match.teamBName}</span>
-                      </div>
-                      <div className="text-xs text-text-secondary flex items-center gap-1 mt-0.5 font-mono">
-                        <Clock className="w-3.5 h-3.5 text-text-secondary" />
-                        <LiveTimer durationSeconds={match.durationSeconds} />
-                      </div>
+
+                    <div className="flex items-center gap-3">
+                      <StatusIndicator
+                        status={
+                          match.status === 'live'
+                            ? 'online'
+                            : match.status === 'paused'
+                            ? 'inMatch'
+                            : 'offline'
+                        }
+                        label={
+                          match.status === 'live'
+                            ? t('dashboard.live')
+                            : match.status === 'paused'
+                            ? t('dashboard.paused')
+                            : t('dashboard.ended')
+                        }
+                      />
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-3">
-                    {match.detectionAlertsCount > 0 && (
-                      <Badge variant="banned" className="px-2 py-0.5 animate-pulse font-vazir">
-                        {isRtl
-                          ? `${match.detectionAlertsCount.toLocaleString('fa-IR')} هشدار تقلب`
-                          : `${match.detectionAlertsCount} Alerts`}
-                      </Badge>
-                    )}
-                    <StatusIndicator
-                      status={
-                        match.status === 'live'
-                          ? 'online'
-                          : match.status === 'paused'
-                          ? 'inMatch'
-                          : 'offline'
-                      }
-                      label={
-                        match.status === 'live'
-                          ? t('dashboard.live')
-                          : match.status === 'paused'
-                          ? t('dashboard.paused')
-                          : t('dashboard.ended')
-                      }
-                    />
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full text-text-secondary py-12">
+                <Clock className="w-12 h-12 text-text-muted mb-3 animate-pulse" />
+                <p className="text-sm font-semibold">{isRtl ? 'هیچ بازی زنده‌ای در حال برگزاری نیست.' : 'No live matches in progress.'}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 

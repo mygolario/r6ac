@@ -1,4 +1,4 @@
-import { eq, and } from 'drizzle-orm';
+import { eq, and, or } from 'drizzle-orm';
 import { players, refreshTokens } from '../db/schema';
 import { db } from '../plugins/db';
 
@@ -12,6 +12,16 @@ export class AuthRepository {
     const [user] = await db.select().from(players).where(eq(players.email, email)).limit(1);
     return user;
   }
+
+  static async findUserByUsernameOrEmail(identifier: string) {
+    const [user] = await db
+      .select()
+      .from(players)
+      .where(or(eq(players.email, identifier), eq(players.username, identifier)))
+      .limit(1);
+    return user;
+  }
+
 
   static async findUserById(id: string) {
     const [user] = await db.select().from(players).where(eq(players.id, id)).limit(1);

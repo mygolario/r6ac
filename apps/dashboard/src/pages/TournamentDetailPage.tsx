@@ -4,8 +4,7 @@ import { Trophy, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useTournament, useReports, usePlayers } from '../hooks/useApi';
-import { mockTeams } from '../lib/mock-data';
+import { useTournament, useReports, usePlayers, useBracket } from '../hooks/useApi';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -34,6 +33,7 @@ export const TournamentDetailPage = () => {
   const { data: tournamentDetail } = useTournament(id || '');
   const { data: reportsData } = useReports({ page: 1, limit: 100 });
   const { data: playersData } = usePlayers({ page: 1, limit: 100 });
+  const { data: bracketMatchesData } = useBracket(id || '');
 
   const tournament = tournamentDetail?.tournament || {
     id: id || 'tour_1',
@@ -48,27 +48,7 @@ export const TournamentDetailPage = () => {
 
   const playersList = playersData?.players || [];
   const reportsList = reportsData?.reports || [];
-
-  const bracketMatches = [
-    { id: 'b_1', round: 1, teamA: 'Shahin Esports', teamB: 'Azarakhsh Esports', scoreA: 7, scoreB: 5, isLive: false, winner: 'A' },
-    { id: 'b_2', round: 1, teamA: 'Cobra Esports', teamB: 'Damavand Esports', scoreA: 4, scoreB: 3, isLive: true, winner: undefined },
-    { id: 'b_3', round: 1, teamA: 'Simurgh Esports', teamB: 'Perspolis Esports', scoreA: 2, scoreB: 7, isLive: false, winner: 'B' },
-    { id: 'b_4', round: 1, teamA: 'Zagros Esports', teamB: 'Alvand Esports', scoreA: 7, scoreB: 6, isLive: false, winner: 'A' },
-    { id: 'b_5', round: 1, teamA: 'TBD', teamB: 'TBD', scoreA: undefined, scoreB: undefined, isLive: false },
-    { id: 'b_6', round: 1, teamA: 'TBD', teamB: 'TBD', scoreA: undefined, scoreB: undefined, isLive: false },
-    { id: 'b_7', round: 1, teamA: 'TBD', teamB: 'TBD', scoreA: undefined, scoreB: undefined, isLive: false },
-    { id: 'b_8', round: 1, teamA: 'TBD', teamB: 'TBD', scoreA: undefined, scoreB: undefined, isLive: false },
-
-    { id: 'b_9', round: 2, teamA: 'Shahin Esports', teamB: 'TBD', scoreA: undefined, scoreB: undefined, isLive: false },
-    { id: 'b_10', round: 2, teamA: 'Perspolis Esports', teamB: 'Zagros Esports', scoreA: 7, scoreB: 3, isLive: false, winner: 'A' },
-    { id: 'b_11', round: 2, teamA: 'TBD', teamB: 'TBD', scoreA: undefined, scoreB: undefined, isLive: false },
-    { id: 'b_12', round: 2, teamA: 'TBD', teamB: 'TBD', scoreA: undefined, scoreB: undefined, isLive: false },
-
-    { id: 'b_13', round: 3, teamA: 'TBD', teamB: 'Perspolis Esports', scoreA: undefined, scoreB: undefined, isLive: false },
-    { id: 'b_14', round: 3, teamA: 'TBD', teamB: 'TBD', scoreA: undefined, scoreB: undefined, isLive: false },
-
-    { id: 'b_15', round: 4, teamA: 'TBD', teamB: 'TBD', scoreA: undefined, scoreB: undefined, isLive: false },
-  ];
+  const bracketMatches = bracketMatchesData || [];
 
   const toggleTeamRoster = (teamId: string) => {
     setExpandedTeamId(expandedTeamId === teamId ? null : teamId);
@@ -160,122 +140,183 @@ export const TournamentDetailPage = () => {
           {activeTab === 'bracket' && (
             <div className="overflow-x-auto w-full pb-6 scrollbar-thin font-vazir">
               <div className="min-w-[1100px] grid grid-cols-4 gap-6 p-4 font-vazir">
+                {/* Round 1 */}
                 <div className="space-y-4 font-vazir">
                   <h4 className="text-xs font-bold text-text-secondary uppercase border-b border-border pb-2 font-vazir">
                     {isRtl ? 'یک‌هشتم نهایی (Round of 16)' : 'Round of 16'}
                   </h4>
                   <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-4 font-vazir">
-                    {bracketMatches.filter((m) => m.round === 1).map((match) => (
-                      <motion.div variants={bracketVariants} key={match.id}>
-                        <Card className={`relative transition-all duration-300 ${match.isLive ? 'border-accent shadow-accent/15 ring-1 ring-accent animate-pulse' : 'hover:border-border'}`}>
-                          {match.isLive && (
-                            <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
-                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-                              <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
-                            </span>
-                          )}
-                          <CardContent className="p-3 text-xs flex flex-col gap-1.5 font-vazir">
-                            <div className={`flex items-center justify-between p-1.5 rounded font-vazir ${match.winner === 'A' ? 'bg-success/5 text-success' : 'text-text-primary'}`}>
-                              <span className="font-semibold font-vazir">{match.teamA}</span>
-                              <span className="font-mono font-bold text-sm font-mono">
-                                {match.scoreA !== undefined ? (isRtl ? match.scoreA.toLocaleString('fa-IR') : match.scoreA) : '-'}
-                              </span>
-                            </div>
-                            <div className={`flex items-center justify-between p-1.5 rounded font-vazir ${match.winner === 'B' ? 'bg-success/5 text-success' : 'text-text-primary'}`}>
-                              <span className="font-semibold font-vazir">{match.teamB}</span>
-                              <span className="font-mono font-bold text-sm font-mono">
-                                {match.scoreB !== undefined ? (isRtl ? match.scoreB.toLocaleString('fa-IR') : match.scoreB) : '-'}
-                              </span>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      </motion.div>
-                    ))}
+                    {bracketMatches.filter((m: any) => m.round === 1).length > 0 ? (
+                      bracketMatches.filter((m: any) => m.round === 1).map((match: any) => {
+                        const teamAName = isRtl ? (match.teamANameFa || match.teamAName) : match.teamAName;
+                        const teamBName = isRtl ? (match.teamBNameFa || match.teamBName) : match.teamBName;
+                        const isLive = match.status === 'live' || match.status === 'paused';
+                        const winnerA = match.status === 'completed' && match.scoreA > match.scoreB;
+                        const winnerB = match.status === 'completed' && match.scoreB > match.scoreA;
+
+                        return (
+                          <motion.div variants={bracketVariants} key={match.id}>
+                            <Card className={`relative transition-all duration-300 ${isLive ? 'border-accent shadow-accent/15 ring-1 ring-accent animate-pulse' : 'hover:border-border'}`}>
+                              {isLive && (
+                                <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
+                                </span>
+                              )}
+                              <CardContent className="p-3 text-xs flex flex-col gap-1.5 font-vazir">
+                                <div className={`flex items-center justify-between p-1.5 rounded font-vazir ${winnerA ? 'bg-success/5 text-success' : 'text-text-primary'}`}>
+                                  <span className="font-semibold font-vazir">{teamAName || (isRtl ? 'مشخص نشده' : 'TBD')}</span>
+                                  <span className="font-mono font-bold text-sm font-mono">
+                                    {match.scoreA !== null && match.scoreA !== undefined ? (isRtl ? match.scoreA.toLocaleString('fa-IR') : match.scoreA) : '-'}
+                                  </span>
+                                </div>
+                                <div className={`flex items-center justify-between p-1.5 rounded font-vazir ${winnerB ? 'bg-success/5 text-success' : 'text-text-primary'}`}>
+                                  <span className="font-semibold font-vazir">{teamBName || (isRtl ? 'مشخص نشده' : 'TBD')}</span>
+                                  <span className="font-mono font-bold text-sm font-mono">
+                                    {match.scoreB !== null && match.scoreB !== undefined ? (isRtl ? match.scoreB.toLocaleString('fa-IR') : match.scoreB) : '-'}
+                                  </span>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          </motion.div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center py-4 text-xs text-text-secondary border border-dashed border-border rounded-lg">
+                        {isRtl ? 'بازی‌های این مرحله هنوز شروع نشده‌اند.' : 'Matches for this round have not started.'}
+                      </div>
+                    )}
                   </motion.div>
                 </div>
 
+                {/* Round 2 */}
                 <div className="space-y-8 flex flex-col justify-around font-vazir">
                   <div className="font-vazir">
                     <h4 className="text-xs font-bold text-text-secondary uppercase border-b border-border pb-2 font-vazir mb-6 font-vazir">
                       {isRtl ? 'یک‌چهارم نهایی (Quarterfinals)' : 'Quarterfinals'}
                     </h4>
                     <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-12 font-vazir">
-                      {bracketMatches.filter((m) => m.round === 2).map((match) => (
-                        <motion.div variants={bracketVariants} key={match.id} className="font-vazir">
-                          <Card className="hover:border-border font-vazir">
-                            <CardContent className="p-3 text-xs flex flex-col gap-1.5 font-vazir">
-                              <div className={`flex items-center justify-between p-1.5 rounded font-vazir ${match.winner === 'A' ? 'bg-success/5 text-success' : 'text-text-primary'}`}>
-                                <span className="font-semibold font-vazir">{match.teamA}</span>
-                                <span className="font-mono font-bold text-sm font-mono">
-                                  {match.scoreA !== undefined ? (isRtl ? match.scoreA.toLocaleString('fa-IR') : match.scoreA) : '-'}
-                                </span>
-                              </div>
-                              <div className={`flex items-center justify-between p-1.5 rounded font-vazir ${match.winner === 'B' ? 'bg-success/5 text-success' : 'text-text-primary'}`}>
-                                <span className="font-semibold font-vazir">{match.teamB}</span>
-                                <span className="font-mono font-bold text-sm font-mono">
-                                  {match.scoreB !== undefined ? (isRtl ? match.scoreB.toLocaleString('fa-IR') : match.scoreB) : '-'}
-                                </span>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </motion.div>
-                      ))}
+                      {bracketMatches.filter((m: any) => m.round === 2).length > 0 ? (
+                        bracketMatches.filter((m: any) => m.round === 2).map((match: any) => {
+                          const teamAName = isRtl ? (match.teamANameFa || match.teamAName) : match.teamAName;
+                          const teamBName = isRtl ? (match.teamBNameFa || match.teamBName) : match.teamBName;
+                          const winnerA = match.status === 'completed' && match.scoreA > match.scoreB;
+                          const winnerB = match.status === 'completed' && match.scoreB > match.scoreA;
+
+                          return (
+                            <motion.div variants={bracketVariants} key={match.id} className="font-vazir">
+                              <Card className="hover:border-border font-vazir">
+                                <CardContent className="p-3 text-xs flex flex-col gap-1.5 font-vazir">
+                                  <div className={`flex items-center justify-between p-1.5 rounded font-vazir ${winnerA ? 'bg-success/5 text-success' : 'text-text-primary'}`}>
+                                    <span className="font-semibold font-vazir">{teamAName || (isRtl ? 'مشخص نشده' : 'TBD')}</span>
+                                    <span className="font-mono font-bold text-sm font-mono">
+                                      {match.scoreA !== null && match.scoreA !== undefined ? (isRtl ? match.scoreA.toLocaleString('fa-IR') : match.scoreA) : '-'}
+                                    </span>
+                                  </div>
+                                  <div className={`flex items-center justify-between p-1.5 rounded font-vazir ${winnerB ? 'bg-success/5 text-success' : 'text-text-primary'}`}>
+                                    <span className="font-semibold font-vazir">{teamBName || (isRtl ? 'مشخص نشده' : 'TBD')}</span>
+                                    <span className="font-mono font-bold text-sm font-mono">
+                                      {match.scoreB !== null && match.scoreB !== undefined ? (isRtl ? match.scoreB.toLocaleString('fa-IR') : match.scoreB) : '-'}
+                                    </span>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </motion.div>
+                          );
+                        })
+                      ) : (
+                        <div className="text-center py-4 text-xs text-text-secondary border border-dashed border-border rounded-lg">
+                          {isRtl ? 'بازی‌های این مرحله هنوز شروع نشده‌اند.' : 'Matches for this round have not started.'}
+                        </div>
+                      )}
                     </motion.div>
                   </div>
                 </div>
 
+                {/* Round 3 */}
                 <div className="space-y-8 flex flex-col justify-around font-vazir">
                   <div className="font-vazir">
                     <h4 className="text-xs font-bold text-text-secondary uppercase border-b border-border pb-2 font-vazir mb-6 font-vazir">
                       {isRtl ? 'نیمه‌نهایی (Semifinals)' : 'Semifinals'}
                     </h4>
                     <motion.div variants={containerVariants} initial="hidden" animate="show" className="space-y-36 font-vazir">
-                      {bracketMatches.filter((m) => m.round === 3).map((match) => (
-                        <motion.div variants={bracketVariants} key={match.id}>
-                          <Card className="hover:border-border font-vazir">
-                            <CardContent className="p-3 text-xs flex flex-col gap-1.5 font-vazir">
-                              <div className={`flex items-center justify-between p-1.5 rounded font-vazir ${match.winner === 'A' ? 'bg-success/5 text-success' : 'text-text-primary'}`}>
-                                <span className="font-semibold font-vazir">{match.teamA}</span>
-                                <span className="font-mono font-bold text-sm font-mono">
-                                  {match.scoreA !== undefined ? (isRtl ? match.scoreA.toLocaleString('fa-IR') : match.scoreA) : '-'}
-                                </span>
-                              </div>
-                              <div className={`flex items-center justify-between p-1.5 rounded font-vazir ${match.winner === 'B' ? 'bg-success/5 text-success' : 'text-text-primary'}`}>
-                                <span className="font-semibold font-vazir">{match.teamB}</span>
-                                <span className="font-mono font-bold text-sm font-mono">
-                                  {match.scoreB !== undefined ? (isRtl ? match.scoreB.toLocaleString('fa-IR') : match.scoreB) : '-'}
-                                </span>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </motion.div>
-                      ))}
+                      {bracketMatches.filter((m: any) => m.round === 3).length > 0 ? (
+                        bracketMatches.filter((m: any) => m.round === 3).map((match: any) => {
+                          const teamAName = isRtl ? (match.teamANameFa || match.teamAName) : match.teamAName;
+                          const teamBName = isRtl ? (match.teamBNameFa || match.teamBName) : match.teamBName;
+                          const winnerA = match.status === 'completed' && match.scoreA > match.scoreB;
+                          const winnerB = match.status === 'completed' && match.scoreB > match.scoreA;
+
+                          return (
+                            <motion.div variants={bracketVariants} key={match.id}>
+                              <Card className="hover:border-border font-vazir">
+                                <CardContent className="p-3 text-xs flex flex-col gap-1.5 font-vazir">
+                                  <div className={`flex items-center justify-between p-1.5 rounded font-vazir ${winnerA ? 'bg-success/5 text-success' : 'text-text-primary'}`}>
+                                    <span className="font-semibold font-vazir">{teamAName || (isRtl ? 'مشخص نشده' : 'TBD')}</span>
+                                    <span className="font-mono font-bold text-sm font-mono">
+                                      {match.scoreA !== null && match.scoreA !== undefined ? (isRtl ? match.scoreA.toLocaleString('fa-IR') : match.scoreA) : '-'}
+                                    </span>
+                                  </div>
+                                  <div className={`flex items-center justify-between p-1.5 rounded font-vazir ${winnerB ? 'bg-success/5 text-success' : 'text-text-primary'}`}>
+                                    <span className="font-semibold font-vazir">{teamBName || (isRtl ? 'مشخص نشده' : 'TBD')}</span>
+                                    <span className="font-mono font-bold text-sm font-mono">
+                                      {match.scoreB !== null && match.scoreB !== undefined ? (isRtl ? match.scoreB.toLocaleString('fa-IR') : match.scoreB) : '-'}
+                                    </span>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </motion.div>
+                          );
+                        })
+                      ) : (
+                        <div className="text-center py-4 text-xs text-text-secondary border border-dashed border-border rounded-lg">
+                          {isRtl ? 'بازی‌های این مرحله هنوز شروع نشده‌اند.' : 'Matches for this round have not started.'}
+                        </div>
+                      )}
                     </motion.div>
                   </div>
                 </div>
 
+                {/* Round 4 */}
                 <div className="space-y-8 flex flex-col justify-center font-vazir">
                   <div className="font-vazir">
                     <h4 className="text-xs font-bold text-text-secondary uppercase border-b border-border pb-2 font-vazir mb-6 font-vazir">
                       {isRtl ? 'فینال (Final)' : 'Final'}
                     </h4>
                     <motion.div variants={containerVariants} initial="hidden" animate="show" className="font-vazir">
-                      {bracketMatches.filter((m) => m.round === 4).map((match) => (
-                        <motion.div variants={bracketVariants} key={match.id} className="font-vazir">
-                          <Card className="border-warning/40 bg-warning/5 shadow-lg shadow-warning/5 ring-1 ring-warning/20 font-vazir">
-                            <CardContent className="p-4 text-sm flex flex-col gap-2 font-vazir">
-                              <div className="flex items-center justify-between p-1.5 rounded font-vazir">
-                                <span className="font-semibold text-text-primary font-vazir">{match.teamA}</span>
-                                <span className="font-mono font-bold text-sm font-mono">-</span>
-                              </div>
-                              <div className="flex items-center justify-between p-1.5 rounded font-vazir">
-                                <span className="font-semibold text-text-primary font-vazir">{match.teamB}</span>
-                                <span className="font-mono font-bold text-sm font-mono">-</span>
-                              </div>
-                            </CardContent>
-                          </Card>
-                        </motion.div>
-                      ))}
+                      {bracketMatches.filter((m: any) => m.round === 4).length > 0 ? (
+                        bracketMatches.filter((m: any) => m.round === 4).map((match: any) => {
+                          const teamAName = isRtl ? (match.teamANameFa || match.teamAName) : match.teamAName;
+                          const teamBName = isRtl ? (match.teamBNameFa || match.teamBName) : match.teamBName;
+                          const winnerA = match.status === 'completed' && match.scoreA > match.scoreB;
+                          const winnerB = match.status === 'completed' && match.scoreB > match.scoreA;
+
+                          return (
+                            <motion.div variants={bracketVariants} key={match.id} className="font-vazir">
+                              <Card className="border-warning/40 bg-warning/5 shadow-lg shadow-warning/5 ring-1 ring-warning/20 font-vazir">
+                                <CardContent className="p-4 text-sm flex flex-col gap-2 font-vazir">
+                                  <div className={`flex items-center justify-between p-1.5 rounded font-vazir ${winnerA ? 'text-success' : 'text-text-primary'}`}>
+                                    <span className="font-semibold text-text-primary font-vazir">{teamAName || (isRtl ? 'مشخص نشده' : 'TBD')}</span>
+                                    <span className="font-mono font-bold text-sm font-mono">
+                                      {match.scoreA !== null && match.scoreA !== undefined ? (isRtl ? match.scoreA.toLocaleString('fa-IR') : match.scoreA) : '-'}
+                                    </span>
+                                  </div>
+                                  <div className={`flex items-center justify-between p-1.5 rounded font-vazir ${winnerB ? 'text-success' : 'text-text-primary'}`}>
+                                    <span className="font-semibold text-text-primary font-vazir">{teamBName || (isRtl ? 'مشخص نشده' : 'TBD')}</span>
+                                    <span className="font-mono font-bold text-sm font-mono">
+                                      {match.scoreB !== null && match.scoreB !== undefined ? (isRtl ? match.scoreB.toLocaleString('fa-IR') : match.scoreB) : '-'}
+                                    </span>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            </motion.div>
+                          );
+                        })
+                      ) : (
+                        <div className="text-center py-4 text-xs text-text-secondary border border-dashed border-border rounded-lg">
+                          {isRtl ? 'بازی فینال هنوز برگزار نشده است.' : 'Final match has not started.'}
+                        </div>
+                      )}
                     </motion.div>
                   </div>
                 </div>
@@ -288,81 +329,95 @@ export const TournamentDetailPage = () => {
               <div className="flex items-center justify-between font-vazir">
                 <h3 className="text-lg font-bold font-vazir">{isRtl ? 'تیم‌های ثبت‌نام شده' : 'Registered Teams'}</h3>
                 <span className="text-xs text-text-secondary font-mono font-mono">
-                  {isRtl ? `تعداد کل: ${mockTeams.length.toLocaleString('fa-IR')} تیم` : `Total: ${mockTeams.length} teams`}
+                  {isRtl 
+                    ? `تعداد کل: ${(tournamentDetail?.registeredTeamsCount || 0).toLocaleString('fa-IR')} تیم` 
+                    : `Total: ${tournamentDetail?.registeredTeamsCount || 0} teams`}
                 </span>
               </div>
 
               <div className="grid grid-cols-1 gap-4 font-vazir">
-                {mockTeams.map((team) => {
-                  const isExpanded = expandedTeamId === team.id;
-                  const captain = playersList.find((p: any) => p.id === team.captainId);
+                {(tournamentDetail?.registeredTeamsList || []).length > 0 ? (
+                  (tournamentDetail.registeredTeamsList).map((team: any) => {
+                    const isExpanded = expandedTeamId === team.id;
+                    const teamPlayers = playersList.filter((p: any) => p.teamId === team.id);
+                    const captain = teamPlayers.find((p: any) => p.role === 'team_captain') || teamPlayers[0];
 
-                  return (
-                    <Card key={team.id} className="overflow-hidden hover:border-border transition-colors duration-200 font-vazir">
-                      <div
-                        onClick={() => toggleTeamRoster(team.id)}
-                        className="p-4 flex items-center justify-between cursor-pointer bg-surface-2/20 hover:bg-surface-2/40 transition-colors font-vazir"
-                      >
-                        <div className="flex items-center gap-3 font-vazir">
-                          <div className="w-10 h-10 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center font-bold text-accent font-vazir">
-                            {team.nameFA.substring(4, 6)}
-                          </div>
-                          <div className="font-vazir">
-                            <h4 className="font-bold text-base text-text-primary font-vazir">
-                              {isRtl ? team.nameFA : team.name}
-                            </h4>
-                            <p className="text-xs text-text-secondary mt-0.5 font-vazir font-vazir">
-                              {isRtl ? 'سرپرست تیم' : 'Captain'}: {captain ? (isRtl && captain.usernameFA ? captain.usernameFA : captain.username) : '??'}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-4 font-vazir">
-                          <span className="text-xs text-text-secondary font-mono font-mono">
-                            {isRtl
-                              ? `${team.players.length.toLocaleString('fa-IR')} بازیکن`
-                              : `${team.players.length} players`}
-                          </span>
-                          {isExpanded ? <ChevronUp className="w-5 h-5 text-text-secondary" /> : <ChevronDown className="w-5 h-5 text-text-secondary" />}
-                        </div>
-                      </div>
-
-                      <AnimatePresence>
-                        {isExpanded && (
-                          <motion.div
-                            initial={{ height: 0 }}
-                            animate={{ height: 'auto' }}
-                            exit={{ height: 0 }}
-                            className="overflow-hidden border-t border-border bg-surface font-vazir"
-                          >
-                            <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 font-vazir">
-                              {team.players.map((player) => (
-                                <div
-                                  key={player.id}
-                                  className="p-3 rounded-lg border border-border bg-surface-2/40 flex items-center gap-2.5 hover:border-accent/30 transition-colors font-vazir"
-                                >
-                                  <Avatar
-                                    initials={(isRtl ? player.usernameFA : player.username).substring(0, 2)}
-                                    size="sm"
-                                    status={player.banStatus}
-                                  />
-                                  <div className="overflow-hidden font-vazir">
-                                    <span className="font-semibold text-xs text-text-primary block truncate font-vazir font-vazir">
-                                      {isRtl ? player.usernameFA : player.username}
-                                    </span>
-                                    <span className="text-[10px] text-text-secondary uppercase block font-mono font-mono">
-                                      {player.role === 'team_captain' ? (isRtl ? 'کاپیتان' : 'Captain') : (isRtl ? 'عضو' : 'Player')}
-                                    </span>
-                                  </div>
-                                </div>
-                              ))}
+                    return (
+                      <Card key={team.id} className="overflow-hidden hover:border-border transition-colors duration-200 font-vazir">
+                        <div
+                          onClick={() => toggleTeamRoster(team.id)}
+                          className="p-4 flex items-center justify-between cursor-pointer bg-surface-2/20 hover:bg-surface-2/40 transition-colors font-vazir"
+                        >
+                          <div className="flex items-center gap-3 font-vazir">
+                            <div className="w-10 h-10 rounded-full bg-accent/10 border border-accent/20 flex items-center justify-center font-bold text-accent font-vazir">
+                              {(team.nameFa || team.name || 'TM').substring(0, 2)}
                             </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </Card>
-                  );
-                })}
+                            <div className="font-vazir">
+                              <h4 className="font-bold text-base text-text-primary font-vazir">
+                                {isRtl ? (team.nameFa || team.name) : team.name}
+                              </h4>
+                              <p className="text-xs text-text-secondary mt-0.5 font-vazir font-vazir">
+                                {isRtl ? 'سرپرست تیم' : 'Captain'}: {captain ? (isRtl && captain.usernameFA ? captain.usernameFA : captain.username) : '??'}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-4 font-vazir">
+                            <span className="text-xs text-text-secondary font-mono font-mono">
+                              {isRtl
+                                ? `${teamPlayers.length.toLocaleString('fa-IR')} بازیکن`
+                                : `${teamPlayers.length} players`}
+                            </span>
+                            {isExpanded ? <ChevronUp className="w-5 h-5 text-text-secondary" /> : <ChevronDown className="w-5 h-5 text-text-secondary" />}
+                          </div>
+                        </div>
+
+                        <AnimatePresence>
+                          {isExpanded && (
+                            <motion.div
+                              initial={{ height: 0 }}
+                              animate={{ height: 'auto' }}
+                              exit={{ height: 0 }}
+                              className="overflow-hidden border-t border-border bg-surface font-vazir"
+                            >
+                              <div className="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 font-vazir">
+                                {teamPlayers.map((player: any) => (
+                                  <div
+                                    key={player.id}
+                                    className="p-3 rounded-lg border border-border bg-surface-2/40 flex items-center gap-2.5 hover:border-accent/30 transition-colors font-vazir"
+                                  >
+                                    <Avatar
+                                      initials={(isRtl && player.usernameFA ? player.usernameFA : player.username).substring(0, 2)}
+                                      size="sm"
+                                      status={player.banStatus}
+                                    />
+                                    <div className="overflow-hidden font-vazir">
+                                      <span className="font-semibold text-xs text-text-primary block truncate font-vazir font-vazir">
+                                        {isRtl && player.usernameFA ? player.usernameFA : player.username}
+                                      </span>
+                                      <span className="text-[10px] text-text-secondary uppercase block font-mono font-mono">
+                                        {player.role === 'team_captain' ? (isRtl ? 'کاپیتان' : 'Captain') : (isRtl ? 'عضو' : 'Player')}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))}
+                                {teamPlayers.length === 0 && (
+                                  <div className="col-span-5 text-center p-4 text-xs text-text-secondary">
+                                    {isRtl ? 'هیچ بازیکنی در این تیم ثبت نشده است.' : 'No players registered in this team.'}
+                                  </div>
+                                )}
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </Card>
+                    );
+                  })
+                ) : (
+                  <div className="text-center py-8 text-text-secondary border border-dashed border-border rounded-lg animate-pulse">
+                    {isRtl ? 'هیچ تیمی ثبت‌نام نکرده است.' : 'No teams registered.'}
+                  </div>
+                )}
               </div>
             </div>
           )}

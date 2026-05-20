@@ -19,6 +19,9 @@ export const redisSub = new Redis(redisUrl, {
   retryStrategy: (times) => Math.min(times * 50, 2000),
 });
 
+redis.on('error', () => {});
+redisSub.on('error', () => {});
+
 declare module 'fastify' {
   interface FastifyInstance {
     redis: Redis;
@@ -28,8 +31,14 @@ declare module 'fastify' {
 
 const redisPlugin: FastifyPluginAsync = async (fastify) => {
   try {
-    await redis.connect().catch(() => {}); // non-blocking for dev/tests
-    await redisSub.connect().catch(() => {});
+    await Promise.race([
+      redis.connect(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 500))
+    ]).catch(() => {});
+    await Promise.race([
+      redisSub.connect(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 500))
+    ]).catch(() => {});
   } catch (err) {
     fastify.log.warn('Redis connection failed, continuing without Redis');
   }
@@ -37,8 +46,8 @@ const redisPlugin: FastifyPluginAsync = async (fastify) => {
   fastify.decorate('redisSub', redisSub);
 
   fastify.addHook('onClose', async () => {
-    await redis.quit();
-    await redisSub.quit();
+    redis.disconnect();
+    redisSub.disconnect();
   });
 };
 

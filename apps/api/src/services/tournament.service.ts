@@ -128,4 +128,8 @@ export class TournamentService {
 
     return updated;
   }
+
+  static async getLiveMatches() {
+    return TournamentRepository.findLiveMatches();
+  }
 }

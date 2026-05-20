@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("R6AC.Agent")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+aad6a4f1224865a6f9d2931a6e9ad27b93013683")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c42af069021c48be58e28ae221fbc8fb0ffa11c1")]
 [assembly: System.Reflection.AssemblyProductAttribute("R6AC.Agent")]
 [assembly: System.Reflection.AssemblyTitleAttribute("R6AC.Agent")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

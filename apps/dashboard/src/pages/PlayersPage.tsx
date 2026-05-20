@@ -4,8 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Plus, X, AlertTriangle, ShieldAlert, Ban, Info, Eye, ShieldCheck, History } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { usePlayers, useUpdateBanStatus } from '../hooks/useApi';
-import { mockTeams, mockDetectionReports } from '../lib/mock-data';
+import { usePlayers, useUpdateBanStatus, usePlayer, useReports } from '../hooks/useApi';
 
 // Custom Drawer Component
 const Drawer = ({
@@ -183,10 +182,16 @@ export const PlayersPage = () => {
     search: search || undefined,
     banStatus: filter === 'all' ? undefined : filter,
   });
+  const { data: reportsData } = useReports({ page: 1, limit: 1000 });
   const updateBanMutation = useUpdateBanStatus();
 
   const filteredPlayers = playersData?.players || [];
   const totalCount = playersData?.total || filteredPlayers.length;
+  const reportsList = reportsData?.reports || [];
+
+  const { data: playerDetailData } = usePlayer(selectedPlayer?.id || '');
+  const playerDetail = playerDetailData || null;
+  const playerReports = reportsList.filter((r: any) => r.playerId === selectedPlayer?.id);
 
   const handleRowClick = (player: Player) => {
     setSelectedPlayer(player);
@@ -212,11 +217,6 @@ export const PlayersPage = () => {
       }
     } catch (err) {}
   };
-
-  const timelineLogs = [
-    { date: '2026-05-18T14:30:00Z', event: 'ورود از سخت‌افزار جدید', eventEN: 'Logged in from new hardware', status: 'info' },
-    { date: '2026-05-19T00:15:30Z', event: 'تشخیص مشکوک آنتی‌چیت (FPGA)', eventEN: 'Suspicious Anti-Cheat detection (FPGA)', status: 'flag' },
-  ];
 
   return (
     <motion.div
@@ -292,8 +292,7 @@ export const PlayersPage = () => {
             <motion.tbody variants={containerVariants} initial="hidden" animate="show">
               {filteredPlayers.length > 0 ? (
                 filteredPlayers.map((player: any, idx: number) => {
-                  const team = mockTeams.find((t) => t.id === player.teamId);
-                  const reportsCount = mockDetectionReports.filter((r) => r.playerId === player.id).length;
+                  const reportsCount = reportsList.filter((r: any) => r.playerId === player.id).length;
                   const initials = (isRtl && player.usernameFA ? player.usernameFA : player.username).substring(0, 2);
 
                   return (
@@ -322,7 +321,7 @@ export const PlayersPage = () => {
                         </div>
                       </td>
                       <td className="p-4 font-semibold text-text-primary text-start font-vazir">
-                        {team ? (isRtl ? team.nameFA : team.name) : '-'}
+                        {player.teamId ? (isRtl ? 'دارای تیم' : 'In Team') : '-'}
                       </td>
                       <td className="p-4 text-center font-vazir">
                         <Badge variant={player.banStatus}>
@@ -421,7 +420,9 @@ export const PlayersPage = () => {
               <div className="bg-surface-2 p-3 rounded-lg border border-border flex items-center justify-between font-mono text-sm">
                 <span className="text-text-secondary">SHA-256</span>
                 <span className="text-text-primary font-bold tracking-widest">
-                  ••••••••A3F2C1D8
+                  {playerDetail?.hardwareFingerprintHash 
+                    ? `••••••••${playerDetail.hardwareFingerprintHash.substring(playerDetail.hardwareFingerprintHash.length - 8).toUpperCase()}` 
+                    : (isRtl ? 'بدون اثر انگشت سخت‌افزاری' : 'No HW Fingerprint')}
                 </span>
               </div>
             </div>
@@ -432,17 +433,21 @@ export const PlayersPage = () => {
                 {t('players.timelineTitle')}
               </h5>
               <div className="space-y-4 border-l border-border ps-4 relative ms-2 RTL:border-l-0 RTL:border-r RTL:ps-0 RTL:pe-4 RTL:me-2 font-vazir">
-                {timelineLogs.map((log, idx) => (
-                  <div key={idx} className="relative font-vazir">
-                    <span className="absolute -start-[21px] RTL:-start-auto RTL:-end-[21px] top-1.5 w-2.5 h-2.5 rounded-full bg-border ring-4 ring-surface" />
-                    <div className="text-xs text-text-secondary font-mono">
-                      {new Date(log.date).toLocaleString(isRtl ? 'fa-IR' : 'en-US')}
+                {playerDetail?.banHistory && playerDetail.banHistory.length > 0 ? (
+                  playerDetail.banHistory.map((log: any, idx: number) => (
+                    <div key={idx} className="relative font-vazir">
+                      <span className="absolute -start-[21px] RTL:-start-auto RTL:-end-[21px] top-1.5 w-2.5 h-2.5 rounded-full bg-border ring-4 ring-surface" />
+                      <div className="text-xs text-text-secondary font-mono">
+                        {new Date(log.createdAt).toLocaleString(isRtl ? 'fa-IR' : 'en-US')}
+                      </div>
+                      <div className="text-sm font-semibold text-text-primary mt-0.5 font-vazir">
+                        {isRtl ? `تغییر وضعیت: ${log.banType} - ${log.reason}` : `Status update: ${log.banType} - ${log.reason}`}
+                      </div>
                     </div>
-                    <div className="text-sm font-semibold text-text-primary mt-0.5 font-vazir">
-                      {isRtl ? log.event : log.eventEN}
-                    </div>
-                  </div>
-                ))}
+                  ))
+                ) : (
+                  <p className="text-xs text-text-secondary">{isRtl ? 'هیچ تاریخچه مسدودیت یا هشداری ثبت نشده است.' : 'No ban history or warnings recorded.'}</p>
+                )}
               </div>
             </div>
 
@@ -451,37 +456,10 @@ export const PlayersPage = () => {
                 <History className="w-4 h-4 text-accent" />
                 {t('players.matchHistory')}
               </h5>
-              <div className="space-y-2 font-vazir">
-                {[
-                  { date: '2026-05-18T18:00:00Z', map: 'Clubhouse', team: 'Shahin', alerts: 0 },
-                  { date: '2026-05-17T20:10:00Z', map: 'Oregon', team: 'Shahin', alerts: 2 },
-                  { date: '2026-05-15T15:40:00Z', map: 'Consulate', team: 'Shahin', alerts: 0 },
-                ].map((match, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between p-3 rounded-lg border border-border bg-surface-2/40 text-xs font-vazir"
-                  >
-                    <div className="flex items-center gap-3 font-vazir">
-                      <span className="font-mono text-text-secondary">
-                        {new Date(match.date).toLocaleDateString(isRtl ? 'fa-IR' : 'en-US')}
-                      </span>
-                      <span className="font-bold text-text-primary font-mono">{match.map}</span>
-                    </div>
-
-                    <div className="flex items-center gap-2 font-vazir">
-                      <span className="text-text-secondary">{match.team}</span>
-                      {match.alerts > 0 ? (
-                        <Badge variant="banned" className="text-[10px] px-1 py-0 animate-pulse font-vazir">
-                          {isRtl ? `${match.alerts} هشدار` : `${match.alerts} alerts`}
-                        </Badge>
-                      ) : (
-                        <Badge variant="clean" className="text-[10px] px-1 py-0 font-vazir">
-                          {isRtl ? 'امن' : 'Safe'}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                ))}
+              <div className="space-y-2 font-vazir text-xs text-text-secondary">
+                {isRtl 
+                  ? 'تاریخچه بازی‌ها در طول مسابقات فعال تورنمنت ثبت و نمایش داده می‌شود.' 
+                  : 'Match history is recorded and displayed during active tournament matches.'}
               </div>
             </div>
 
@@ -500,27 +478,24 @@ export const PlayersPage = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {mockDetectionReports.filter((r) => r.playerId === selectedPlayer.id).length > 0 ? (
-                      mockDetectionReports
-                        .filter((r) => r.playerId === selectedPlayer.id)
-                        .slice(0, 5)
-                        .map((report) => (
-                          <tr key={report.id} className="border-b border-border hover:bg-surface-2/30 font-vazir">
-                            <td className="p-2.5 font-bold font-mono text-text-primary">{report.detectionType}</td>
-                            <td className="p-2.5 text-center font-vazir">
-                              <span className={`px-1.5 py-0.5 rounded font-mono font-bold ${
-                                report.confidence > 0.8 ? 'text-danger' : report.confidence > 0.5 ? 'text-warning' : 'text-success'
-                              }`}>
-                                {isRtl
-                                  ? `${Math.round(report.confidence * 100).toLocaleString('fa-IR')}٪`
-                                  : `${Math.round(report.confidence * 100)}%`}
-                              </span>
-                            </td>
-                            <td className="p-2.5 text-end text-text-secondary font-mono">
-                              {new Date(report.createdAt).toLocaleDateString(isRtl ? 'fa-IR' : 'en-US')}
-                            </td>
-                          </tr>
-                        ))
+                    {playerReports && playerReports.length > 0 ? (
+                      playerReports.slice(0, 5).map((report: any) => (
+                        <tr key={report.id} className="border-b border-border hover:bg-surface-2/30 font-vazir">
+                          <td className="p-2.5 font-bold font-mono text-text-primary">{report.detectionType}</td>
+                          <td className="p-2.5 text-center font-vazir">
+                            <span className={`px-1.5 py-0.5 rounded font-mono font-bold ${
+                              report.confidence > 0.8 ? 'text-danger' : report.confidence > 0.5 ? 'text-warning' : 'text-success'
+                            }`}>
+                              {isRtl
+                                ? `${Math.round(report.confidence * 100).toLocaleString('fa-IR')}٪`
+                                : `${Math.round(report.confidence * 100)}%`}
+                            </span>
+                          </td>
+                          <td className="p-2.5 text-end text-text-secondary font-mono">
+                            {new Date(report.createdAt).toLocaleDateString(isRtl ? 'fa-IR' : 'en-US')}
+                          </td>
+                        </tr>
+                      ))
                     ) : (
                       <tr>
                         <td colSpan={3} className="p-4 text-center text-text-secondary font-vazir">

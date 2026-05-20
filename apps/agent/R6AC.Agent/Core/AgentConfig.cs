@@ -60,10 +60,10 @@ public class BehavioralConfig
 public class AgentConfig
 {
     [JsonPropertyName("version")] public string Version { get; set; } = "1.0.0";
-    [JsonPropertyName("apiBaseUrl")] public string ApiBaseUrl { get; set; } = "https://api.r6ac.ir";
+    [JsonPropertyName("apiBaseUrl")] public string ApiBaseUrl { get; set; } = "https://r6ac-api.liara.run";
     [JsonPropertyName("scanIntervalSeconds")] public int ScanIntervalSeconds { get; set; } = 5;
     [JsonPropertyName("reportSyncIntervalSeconds")] public int ReportSyncIntervalSeconds { get; set; } = 30;
-    [JsonPropertyName("offlineMode")] public bool OfflineMode { get; set; } = true;
+    [JsonPropertyName("offlineMode")] public bool OfflineMode { get; set; } = false;
     [JsonPropertyName("language")] public string Language { get; set; } = "fa";
 
     [JsonPropertyName("detection")] public DetectionConfig Detection { get; set; } = new();

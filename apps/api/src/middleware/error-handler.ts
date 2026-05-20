@@ -26,8 +26,8 @@ export const errorHandler = (error: FastifyError, request: FastifyRequest, reply
       meta: { timestamp },
       error: {
         code: 'RATE_LIMIT_EXCEEDED',
-        message: 'Too many requests, please try again later.',
-        messageFA: 'درخواست‌های بیش از حد، لطفاً بعداً تلاش کنید.',
+        message: error.message || 'Too many requests, please try again later.',
+        messageFA: (error as any).messageFA || 'درخواست‌های بیش از حد، لطفاً بعداً تلاش کنید.',
       },
     });
   }

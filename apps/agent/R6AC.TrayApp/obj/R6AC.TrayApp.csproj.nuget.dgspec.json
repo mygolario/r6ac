@@ -20,7 +20,7 @@
           "net8.0-windows"
         ],
         "sources": {
-          "C:\\Users\\Ario\\.nuget\\packages": {}
+          "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net8.0-windows7.0": {
@@ -112,7 +112,7 @@
           "net8.0-windows"
         ],
         "sources": {
-          "C:\\Users\\Ario\\.nuget\\packages": {}
+          "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
           "net8.0-windows7.0": {

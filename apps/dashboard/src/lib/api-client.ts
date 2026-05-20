@@ -1,6 +1,8 @@
 import { useAuthStore } from '../stores/auth-store';
 
-const BASE_URL = 'http://localhost:4000/api/v1';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL 
+  ? `${import.meta.env.VITE_API_BASE_URL}/api/v1` 
+  : 'http://localhost:4000/api/v1';
 
 export interface ApiResponse<T = any> {
   success: boolean;
