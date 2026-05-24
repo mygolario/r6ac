@@ -180,6 +180,7 @@ public class AntiVmDetector : IDetector
 
             var dRes = new DetectionResult(
                 Type: DetectionType.VM_ENVIRONMENT,
+                Severity: DetectionSeverity.Flag,
                 Confidence: res.Confidence,
                 ReasonCode: "VM_ENVIRONMENT_" + res.DetectedArtifact.ToUpperInvariant(),
                 Description: $"Virtual Machine environment detected ({res.DetectedArtifact}). Requires human review.",

@@ -36,6 +36,7 @@ export class TournamentRepository {
     );
 
     return {
+      items: result,
       tournaments: result,
       total: totalRes?.count || 0,
     };
@@ -43,6 +44,11 @@ export class TournamentRepository {
 
   static async create(data: typeof tournaments.$inferInsert) {
     const [t] = await db.insert(tournaments).values(data).returning();
+    return t;
+  }
+
+  static async findByName(name: string) {
+    const [t] = await db.select().from(tournaments).where(eq(tournaments.name, name)).limit(1);
     return t;
   }
 

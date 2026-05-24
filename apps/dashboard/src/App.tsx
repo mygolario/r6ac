@@ -6,10 +6,12 @@ import { initWsClient } from './lib/ws-client';
 
 import { DashboardPage } from './pages/DashboardPage';
 import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { PlayersPage } from './pages/PlayersPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { SettingsPage } from './pages/SettingsPage';
+import { TournamentCreatePage } from './pages/TournamentCreatePage';
 import { TournamentDetailPage } from './pages/TournamentDetailPage';
 import { TournamentsPage } from './pages/TournamentsPage';
 import { useAuthStore } from './stores/auth-store';
@@ -41,6 +43,7 @@ export const App = () => {
       <BrowserRouter>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
 
           <Route
             path="/"
@@ -52,6 +55,7 @@ export const App = () => {
           >
             <Route index element={<DashboardPage />} />
             <Route path="tournaments" element={<TournamentsPage />} />
+            <Route path="tournaments/new" element={<TournamentCreatePage />} />
             <Route path="tournaments/:id" element={<TournamentDetailPage />} />
             <Route path="players" element={<PlayersPage />} />
             <Route path="reports" element={<ReportsPage />} />

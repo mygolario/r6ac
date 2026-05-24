@@ -9,6 +9,7 @@ export interface Player {
   banStatus: 'clean' | 'flagged' | 'banned';
   createdAt: string;
   updatedAt: string;
+  isLive?: boolean;
 }
 
 // Team

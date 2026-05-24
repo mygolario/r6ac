@@ -23,7 +23,7 @@ public class GameIntegrityCheck : IDetector
 
     private static readonly List<string> WhitelistedDllKeywords = new()
     {
-        "windows", "system32", "syswow64", "program files", "ubisoft", "rainbowsix", "vulkan", "steam", "epic games"
+        "windows", "system32", "syswow64", "program files", "ubisoft", "rainbowsix", "rainbow six", "vulkan", "steam", "epic games", "discord", "overwolf", "rivatuner", "rtss", "nvidia", "amd"
     };
 
     public GameIntegrityCheck(AgentConfig config)
@@ -64,6 +64,7 @@ public class GameIntegrityCheck : IDetector
 
                             return new DetectionResult(
                                 Type: DetectionType.GAME_TAMPERING,
+                                Severity: DetectionSeverity.Kick,
                                 Confidence: 1.0f,
                                 ReasonCode: "GAME_EXECUTABLE_HASH_MISMATCH",
                                 Description: $"Game executable tampered! Expected: {_config.ExpectedGameHash}, Got: {actualHash}",
@@ -98,6 +99,7 @@ public class GameIntegrityCheck : IDetector
 
                             return new DetectionResult(
                                 Type: DetectionType.GAME_TAMPERING,
+                                Severity: DetectionSeverity.Kick,
                                 Confidence: 0.85f,
                                 ReasonCode: "UNRECOGNIZED_DLL_INJECTION",
                                 Description: $"Suspicious unauthorized DLL injected into game process: {modName}",

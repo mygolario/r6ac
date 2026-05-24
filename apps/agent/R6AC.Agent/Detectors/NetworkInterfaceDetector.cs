@@ -12,7 +12,14 @@ public class NetworkInterfaceDetector : IDetector
     public string DetectorName => "NetworkInterfaceDetector";
     public DetectionType DetectionType => DetectionType.FORBIDDEN_NETWORK;
 
-    private static readonly List<string> WhitelistedKeywords = new() { "electro" };
+    private static readonly List<string> WhitelistedKeywords = new() 
+    { 
+        "electro", "nordvpn", "expressvpn", "cyberghost", "protonvpn", "surfshark", 
+        "windscribe", "mullvad", "exitlag", "wtfast", "mudfish", "pingzapper", 
+        "noping", "hidemyass", "tunnelbear", "private internet access", "vyprvpn", 
+        "ipvanish", "hotspot shield", "cloudflare", "warp", "outline", "v2ray", 
+        "shadowsocks", "clash", "nekoray", "netch", "v2rayn", "openconnect", "anyconnect"
+    };
 
     private static readonly List<string> SuspiciousKeywords = new()
     {
@@ -32,6 +39,7 @@ public class NetworkInterfaceDetector : IDetector
             var physicalCount = 0;
             var virtualCount = 0;
             var activePhysicalNames = new List<string>();
+            bool gameIsRunning = GameProcessMonitor.IsGameRunning("RainbowSix");
 
             foreach (var adapter in interfaces)
             {
@@ -60,14 +68,33 @@ public class NetworkInterfaceDetector : IDetector
                             { "MatchedKeyword", kw }
                         };
 
-                        return new DetectionResult(
-                            Type: DetectionType.FORBIDDEN_NETWORK,
-                            Confidence: 0.80f,
-                            ReasonCode: "UNAUTHORIZED_VPN_OR_TUNNEL",
-                            Description: $"Forbidden virtual network adapter active: {adapter.Name}",
-                            DescriptionFA: $"رابط شبکه مجازی غیرمجاز در حال اجرا است: {adapter.Name}",
-                            Evidence: evidence
-                        );
+                        // Iran VPN context: only suspicious if game traffic is routed through it (simulated check here via high net usage + game running)
+                        bool gameUdpTrafficOnVpn = gameIsRunning && (adapter.GetIPv4Statistics().BytesSent > 1_000_000); 
+
+                        if (gameUdpTrafficOnVpn)
+                        {
+                            return new DetectionResult(
+                                Type: DetectionType.FORBIDDEN_NETWORK,
+                         Severity: DetectionSeverity.Suspicious,
+                                Confidence: 0.50f,
+                                ReasonCode: "UNAUTHORIZED_VPN_OR_TUNNEL",
+                                Description: $"VPN/Tunnel routing game traffic detected: {adapter.Name}",
+                                DescriptionFA: $"تونل شبکه با ترافیک بازی کشف شد: {adapter.Name}",
+                                Evidence: evidence
+                            );
+                        }
+                        else
+                        {
+                            return new DetectionResult(
+                                Type: DetectionType.FORBIDDEN_NETWORK,
+                         Severity: DetectionSeverity.Info,
+                                Confidence: 0.0f,
+                                ReasonCode: "VPN_ACTIVE_IDLE",
+                                Description: $"Idle VPN active: {adapter.Name}",
+                                DescriptionFA: $"شبکه VPN در پس زمینه فعال است: {adapter.Name}",
+                                Evidence: evidence
+                            );
+                        }
                     }
                 }
 
@@ -100,6 +127,7 @@ public class NetworkInterfaceDetector : IDetector
 
                 return new DetectionResult(
                     Type: DetectionType.FORBIDDEN_NETWORK,
+                         Severity: DetectionSeverity.Suspicious,
                     Confidence: 0.70f,
                     ReasonCode: "EXCESSIVE_ACTIVE_NETWORK_INTERFACES",
                     Description: $"Multiple active physical network interfaces detected ({physicalCount}), potential DMA network stream.",

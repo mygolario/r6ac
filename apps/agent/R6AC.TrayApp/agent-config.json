@@ -1,0 +1,50 @@
+{
+  "version": "1.0.0",
+  "apiBaseUrl": "https://r6ac-api.liara.run",
+  "scanIntervalSeconds": 5,
+  "reportSyncIntervalSeconds": 30,
+  "offlineMode": false,
+  "language": "fa",
+  "detection": {
+    "processDetection": true,
+    "windowDetection": true,
+    "usbDetection": true,
+    "networkDetection": true,
+    "driverDetection": true,
+    "behavioralDetection": true,
+    "gameIntegrityCheck": true,
+    "selfIntegrityCheck": true
+  },
+  "thresholds": {
+    "autoFlagConfidence": 0.75,
+    "autoKickConfidence": 0.92,
+    "behavioralWindowSeconds": 10,
+    "maxStraightLinePercent": 40,
+    "triggerBotMaxStdDevMs": 5
+  },
+  "electroLan": {
+    "whitelistedAdapterPrefixes": [
+      "ElectroLAN",
+      "TAP-Windows"
+    ]
+  },
+  "behavioral": {
+    "sessionAnalysisIntervalMinutes": 5,
+    "mouseBufferSizeSeconds": 30,
+    "noRecoilStdDevThresholdClean": 5,
+    "noRecoilStdDevThresholdCheat": 2,
+    "triggerbotMaxStdDevMs": 5,
+    "triggerbotMinSamples": 10,
+    "macroIntervalVarianceMs": 2,
+    "weights": {
+      "aimSnapFrequency": 0.15,
+      "trackingSmoothness": 0.15,
+      "clickReactionTimeMs": 0.1,
+      "clickReactionStdDev": 0.12,
+      "noRecoilScore": 0.12,
+      "macroConsistencyScore": 0.08,
+      "hardwareAnomalyScore": 0.18,
+      "dmaIndicatorPresent": 0.1
+    }
+  }
+}

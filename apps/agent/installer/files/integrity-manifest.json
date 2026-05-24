@@ -1,0 +1,27 @@
+{
+  "version": "1.0.0",
+  "timestamp": "2026-05-23T10:46:22.7518753Z",
+  "files": [
+    {
+      "name": "R6AC.Agent.dll",
+      "sha256": "4d3139eebc28f6ed9f84a9323f34d33e9d34af7d68059d87566014ea9f99c5d0",
+      "size": 201216
+    },
+    {
+      "name": "R6AC.Agent.exe",
+      "sha256": "4e5da760a2b0affe2c4b57999e446f08cce8d9f7b930665d19d05e39df31ba05",
+      "size": 151552
+    },
+    {
+      "name": "R6AC.TrayApp.dll",
+      "sha256": "528dc8b7dcb67c610cfdaac6d5067569cc5eb10616d21fd154bbd22ee2da818d",
+      "size": 30720
+    },
+    {
+      "name": "R6AC.TrayApp.exe",
+      "sha256": "0f98409a102edab2d23103ad2876d6915c56e753ed5b2f216fc75b19a0d5980b",
+      "size": 151552
+    }
+  ],
+  "signature": "f6ccda7086e2ee9bc5a6b6bd06a08850f52eff8401ed9ab8437a792b6205c175"
+}

@@ -2,8 +2,8 @@
   "version": "1.0.0",
   "apiBaseUrl": "https://r6ac-api.liara.run",
   "scanIntervalSeconds": 5,
-  "reportSyncIntervalSeconds": 30,
-  "offlineMode": true,
+  "reportSyncIntervalSeconds": 10,
+  "offlineMode": false,
   "language": "fa",
   "detection": {
     "processDetection": true,

@@ -592,33 +592,8 @@
           }
         }
       },
-      "System.Text.Encodings.Web/8.0.0": {
+      "System.Text.Json/8.0.5": {
         "type": "package",
-        "compile": {
-          "lib/net8.0/System.Text.Encodings.Web.dll": {
-            "related": ".xml"
-          }
-        },
-        "runtime": {
-          "lib/net8.0/System.Text.Encodings.Web.dll": {
-            "related": ".xml"
-          }
-        },
-        "build": {
-          "buildTransitive/net6.0/_._": {}
-        },
-        "runtimeTargets": {
-          "runtimes/browser/lib/net8.0/System.Text.Encodings.Web.dll": {
-            "assetType": "runtime",
-            "rid": "browser"
-          }
-        }
-      },
-      "System.Text.Json/8.0.0": {
-        "type": "package",
-        "dependencies": {
-          "System.Text.Encodings.Web": "8.0.0"
-        },
         "compile": {
           "lib/net8.0/System.Text.Json.dll": {
             "related": ".xml"
@@ -740,7 +715,7 @@
           "Serilog.Sinks.Console": "5.0.0",
           "Serilog.Sinks.File": "5.0.0",
           "System.Management": "8.0.0",
-          "System.Text.Json": "8.0.0"
+          "System.Text.Json": "8.0.5"
         },
         "compile": {
           "bin/placeholder/R6AC.Agent.dll": {}
@@ -1612,45 +1587,10 @@
         "version.txt"
       ]
     },
-    "System.Text.Encodings.Web/8.0.0": {
-      "sha512": "yev/k9GHAEGx2Rg3/tU6MQh4HGBXJs70y7j1LaM1i/ER9po+6nnQ6RRqTJn1E7Xu0fbIFK80Nh5EoODxrbxwBQ==",
+    "System.Text.Json/8.0.5": {
+      "sha512": "0f1B50Ss7rqxXiaBJyzUu9bWFOO2/zSlifZ/UNMdiIpDYe4cY4LQQicP4nirK1OS31I43rn062UIJ1Q9bpmHpg==",
       "type": "package",
-      "path": "system.text.encodings.web/8.0.0",
-      "files": [
-        ".nupkg.metadata",
-        ".signature.p7s",
-        "Icon.png",
-        "LICENSE.TXT",
-        "THIRD-PARTY-NOTICES.TXT",
-        "buildTransitive/net461/System.Text.Encodings.Web.targets",
-        "buildTransitive/net462/_._",
-        "buildTransitive/net6.0/_._",
-        "buildTransitive/netcoreapp2.0/System.Text.Encodings.Web.targets",
-        "lib/net462/System.Text.Encodings.Web.dll",
-        "lib/net462/System.Text.Encodings.Web.xml",
-        "lib/net6.0/System.Text.Encodings.Web.dll",
-        "lib/net6.0/System.Text.Encodings.Web.xml",
-        "lib/net7.0/System.Text.Encodings.Web.dll",
-        "lib/net7.0/System.Text.Encodings.Web.xml",
-        "lib/net8.0/System.Text.Encodings.Web.dll",
-        "lib/net8.0/System.Text.Encodings.Web.xml",
-        "lib/netstandard2.0/System.Text.Encodings.Web.dll",
-        "lib/netstandard2.0/System.Text.Encodings.Web.xml",
-        "runtimes/browser/lib/net6.0/System.Text.Encodings.Web.dll",
-        "runtimes/browser/lib/net6.0/System.Text.Encodings.Web.xml",
-        "runtimes/browser/lib/net7.0/System.Text.Encodings.Web.dll",
-        "runtimes/browser/lib/net7.0/System.Text.Encodings.Web.xml",
-        "runtimes/browser/lib/net8.0/System.Text.Encodings.Web.dll",
-        "runtimes/browser/lib/net8.0/System.Text.Encodings.Web.xml",
-        "system.text.encodings.web.8.0.0.nupkg.sha512",
-        "system.text.encodings.web.nuspec",
-        "useSharedDesignerContext.txt"
-      ]
-    },
-    "System.Text.Json/8.0.0": {
-      "sha512": "OdrZO2WjkiEG6ajEFRABTRCi/wuXQPxeV6g8xvUJqdxMvvuCCEk86zPla8UiIQJz3durtUEbNyY/3lIhS0yZvQ==",
-      "type": "package",
-      "path": "system.text.json/8.0.0",
+      "path": "system.text.json/8.0.5",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -1715,7 +1655,7 @@
         "lib/net8.0/System.Text.Json.xml",
         "lib/netstandard2.0/System.Text.Json.dll",
         "lib/netstandard2.0/System.Text.Json.xml",
-        "system.text.json.8.0.0.nupkg.sha512",
+        "system.text.json.8.0.5.nupkg.sha512",
         "system.text.json.nuspec",
         "useSharedDesignerContext.txt"
       ]
@@ -1879,11 +1819,11 @@
   "projectFileDependencyGroups": {
     "net8.0-windows7.0": [
       "Microsoft.NET.Test.Sdk >= 17.9.0",
-      "Moq >= 4.20.7",
+      "Moq >= 4.20.69",
       "R6AC.Agent >= 1.0.0",
       "coverlet.collector >= 6.0.2",
       "xunit >= 2.7.0",
-      "xunit.runner.visualstudio >= 2.7.0"
+      "xunit.runner.visualstudio >= 2.8.0"
     ]
   },
   "packageFolders": {
@@ -1938,7 +1878,7 @@
           },
           "Moq": {
             "target": "Package",
-            "version": "[4.20.7, )"
+            "version": "[4.20.69, )"
           },
           "coverlet.collector": {
             "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
@@ -1954,7 +1894,7 @@
             "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
             "suppressParent": "All",
             "target": "Package",
-            "version": "[2.7.0, )"
+            "version": "[2.8.0, )"
           }
         },
         "imports": [
@@ -1976,27 +1916,5 @@
         "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.421/PortableRuntimeIdentifierGraph.json"
       }
     }
-  },
-  "logs": [
-    {
-      "code": "NU1603",
-      "level": "Warning",
-      "warningLevel": 1,
-      "message": "R6AC.Agent.Tests depends on Moq (>= 4.20.7) but Moq 4.20.7 was not found. An approximate best match of Moq 4.20.69 was resolved.",
-      "libraryId": "Moq",
-      "targetGraphs": [
-        "net8.0-windows7.0"
-      ]
-    },
-    {
-      "code": "NU1603",
-      "level": "Warning",
-      "warningLevel": 1,
-      "message": "R6AC.Agent.Tests depends on xunit.runner.visualstudio (>= 2.7.0) but xunit.runner.visualstudio 2.7.0 was not found. An approximate best match of xunit.runner.visualstudio 2.8.0 was resolved.",
-      "libraryId": "xunit.runner.visualstudio",
-      "targetGraphs": [
-        "net8.0-windows7.0"
-      ]
-    }
-  ]
+  }
 }

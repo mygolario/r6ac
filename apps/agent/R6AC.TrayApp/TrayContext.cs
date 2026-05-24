@@ -201,10 +201,17 @@ public class TrayContext : ApplicationContext
         if (_itemSync != null) _itemSync.Enabled = true;
     }
 
+    private DateTime _lastNotificationTime = DateTime.MinValue;
+
     private void AgentService_OnDetectionTriggered(object? sender, DetectionReport report)
     {
         UpdateTrayIconState();
-        _notifyIcon.ShowBalloonTip(3000, "R6AC Anti-Cheat", CurrentStrings["Toast_Alert"], ToolTipIcon.Warning);
+
+        if ((DateTime.Now - _lastNotificationTime).TotalSeconds > 10)
+        {
+            _notifyIcon.ShowBalloonTip(3000, "R6AC Anti-Cheat", CurrentStrings["Toast_Alert"], ToolTipIcon.Warning);
+            _lastNotificationTime = DateTime.Now;
+        }
 
         if (_statusForm != null && !_statusForm.IsDisposed)
         {

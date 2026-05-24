@@ -57,12 +57,10 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm tsx scripts/migrate.ts
           
+      - name: Build standalone deploy package
+        run: node scripts/prepare-api-standalone.mjs
+
       - name: Deploy API to Liara
-        working-directory: apps/api
         env:
           LIARA_TOKEN: ${{ secrets.LIARA_TOKEN }}
-        run: |
-          liara deploy \
-            --app r6ac-api \
-            --port 3001 \
-            --no-app-logs
+        run: liara deploy --path deploy/r6ac-api --detach

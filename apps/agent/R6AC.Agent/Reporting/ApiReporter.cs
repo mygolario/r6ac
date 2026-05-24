@@ -17,6 +17,7 @@ public class ApiReporter
     private readonly HttpClient _httpClient;
     private readonly ResiliencePipeline _retryPipeline;
     private readonly AgentConfig _config;
+    private static DateTime _rateLimitUntil = DateTime.MinValue;
 
     public ApiReporter(AgentConfig config)
     {
@@ -45,6 +46,8 @@ public class ApiReporter
     /// </summary>
     public virtual async Task<bool> SyncReports(ReportQueue queue, CancellationToken ct = default)
     {
+        if (DateTime.UtcNow < _rateLimitUntil) return false;
+
         var pending = await queue.GetPendingAsync();
         if (pending.Count == 0) return true;
 
@@ -71,6 +74,8 @@ public class ApiReporter
     /// </summary>
     public virtual async Task<bool> SendReportAsync(DetectionReport report, CancellationToken ct = default)
     {
+        if (DateTime.UtcNow < _rateLimitUntil) return false;
+
         if (AntiDebug.IsSilentModeActive)
         {
             var elapsed = (DateTime.UtcNow - AntiDebug.SilentModeStartTime).TotalSeconds;
@@ -138,6 +143,14 @@ public class ApiReporter
                     Log.Information("Successfully synced report {ReportId} to server.", report.Id);
                     return true;
                 }
+
+                if (response.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+                {
+                    _rateLimitUntil = DateTime.UtcNow.AddSeconds(60);
+                    Log.Warning("Server returned TooManyRequests. Backing off for 60 seconds.");
+                    return false;
+                }
+
                 var body = await response.Content.ReadAsStringAsync(state);
                 Log.Warning("Server returned {StatusCode} when syncing report {ReportId}. Body: {Body}", response.StatusCode, report.Id, body);
                 return false;

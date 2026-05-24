@@ -1,7 +1,10 @@
 using System.Management;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using System.Diagnostics;
+using System.Linq;
 using R6AC.Agent.Core;
+using R6AC.Agent.Utils;
 
 namespace R6AC.Agent.Detectors;
 
@@ -46,7 +49,7 @@ public class AdvancedUsbDetector : IDetector
 
     private static readonly string[] SuspiciousKeywords = new[]
     {
-        "kmbox", "kmnet", "arduino", "teensy", "raspberry", "pico", "ch340", "cp2102", "ftdi"
+        "kmbox", "kmnet", "arduino", "teensy", "raspberry", "pico"
     };
 
     /// <summary>
@@ -72,6 +75,8 @@ public class AdvancedUsbDetector : IDetector
     private DetectionResult? PerformScan(AgentSession session)
     {
         var devices = _useTestingDevices ? _testingDevices : EnumerateHidDevices();
+        bool gameIsRunning = GameProcessMonitor.IsGameRunning("RainbowSix");
+        bool devIdeRunning = Process.GetProcesses().Any(p => Whitelist.SafeProcessNames.Contains(p.ProcessName.ToLowerInvariant()) && (p.ProcessName.ToLowerInvariant() == "code" || p.ProcessName.ToLowerInvariant() == "devenv" || p.ProcessName.ToLowerInvariant() == "rider64"));
 
         foreach (var dev in devices)
         {
@@ -80,6 +85,16 @@ public class AdvancedUsbDetector : IDetector
             var vid = dev.Vid.ToUpperInvariant();
             var serial = dev.SerialNumber;
 
+            if (Whitelist.SafeUsbVidPid.Contains($"VID_{vid}") && vid != "1532" && vid != "046D")
+            {
+                AuditLogger.LogEvent("AdvancedUsbDetector", DetectionSeverity.Info, $"Whitelisted vendor (VID_{vid})", prod);
+                continue; // Safe, but Razer/Logitech need specific spoof checks
+            }
+            if (vid == "1532" || vid == "046D")
+            {
+                AuditLogger.LogEvent("AdvancedUsbDetector", DetectionSeverity.Info, $"Checking known spoof-prone vendor (VID_{vid})", prod);
+            }
+
             // 1. Manufacturer string keyword check
             foreach (var kw in SuspiciousKeywords)
             {
@@ -87,11 +102,38 @@ public class AdvancedUsbDetector : IDetector
                 {
                     var reason = $"VID:0x{dev.Vid} PID:0x{dev.Pid} Manufacturer:{dev.Manufacturer} SerialNumber:{(string.IsNullOrWhiteSpace(dev.SerialNumber) ? "none" : dev.SerialNumber)}";
                     var isArduino = kw == "arduino" || kw == "teensy" || kw == "raspberry" || kw == "pico";
-                    var type = isArduino ? DetectionType.ARDUINO_DETECTED : DetectionType.KMBOX_DETECTED;
+                    
+                    if (isArduino)
+                    {
+                        bool arduinoActingAsHid = dev.IsMouseAndKeyboard || dev.InterfaceCount > 0; // Simplified HID check
+                        if (gameIsRunning && arduinoActingAsHid && !devIdeRunning)
+                        {
+                            return new DetectionResult(
+                                Type: DetectionType.ARDUINO_DETECTED,
+                         Severity: DetectionSeverity.Suspicious,
+                                Confidence: 0.60f,
+                                ReasonCode: reason,
+                                Description: $"Arduino/Teensy development board detected acting as HID during gameplay.",
+                                DescriptionFA: $"برد توسعه آردوینو/تینسی در حال کار به عنوان ماوس/کیبورد حین بازی کشف شد.",
+                                Evidence: new Dictionary<string, object>
+                                {
+                                    ["Vid"] = dev.Vid,
+                                    ["Pid"] = dev.Pid,
+                                    ["Manufacturer"] = dev.Manufacturer
+                                }
+                            );
+                        }
+                        else
+                        {
+                            AuditLogger.LogEvent("AdvancedUsbDetector", DetectionSeverity.Info, "Arduino connected (alone/dev)", reason);
+                            continue;
+                        }
+                    }
 
                     return new DetectionResult(
-                        Type: type,
-                        Confidence: 0.95f,
+                        Type: DetectionType.KMBOX_DETECTED,
+                         Severity: gameIsRunning ? DetectionSeverity.Kick : DetectionSeverity.Flag,
+                        Confidence: gameIsRunning ? 0.91f : 0.82f,
                         ReasonCode: reason,
                         Description: $"Prohibited hardware injector detected: {mfg} ({prod})",
                         DescriptionFA: $"سخت‌افزار غیرمجاز تزریق ورودی کشف شد: {mfg} ({prod})",
@@ -108,23 +150,34 @@ public class AdvancedUsbDetector : IDetector
                 }
             }
 
-            // 2. Known Arduino / Teensy VIDs during active match
+            // 2. Known Arduino / Teensy VIDs
             if (KnownArduinoVids.Contains(vid))
             {
                 var reason = $"VID:0x{dev.Vid} PID:0x{dev.Pid} Manufacturer:{dev.Manufacturer} SerialNumber:{(string.IsNullOrWhiteSpace(dev.SerialNumber) ? "none" : dev.SerialNumber)}";
-                return new DetectionResult(
-                    Type: DetectionType.ARDUINO_DETECTED,
-                    Confidence: 0.92f,
-                    ReasonCode: reason,
-                    Description: $"Arduino/Teensy development board detected during gameplay.",
-                    DescriptionFA: $"برد توسعه آردوینو/تینسی در حین اجرای بازی کشف شد.",
-                    Evidence: new Dictionary<string, object>
-                    {
-                        ["Vid"] = dev.Vid,
-                        ["Pid"] = dev.Pid,
-                        ["Manufacturer"] = dev.Manufacturer
-                    }
-                );
+                bool arduinoActingAsHid = dev.IsMouseAndKeyboard || dev.InterfaceCount > 0;
+                
+                if (gameIsRunning && arduinoActingAsHid && !devIdeRunning)
+                {
+                    return new DetectionResult(
+                        Type: DetectionType.ARDUINO_DETECTED,
+                         Severity: DetectionSeverity.Suspicious,
+                        Confidence: 0.60f,
+                        ReasonCode: reason,
+                        Description: $"Arduino/Teensy development board detected acting as HID during gameplay.",
+                        DescriptionFA: $"برد توسعه آردوینو/تینسی در حال کار به عنوان ماوس/کیبورد حین بازی کشف شد.",
+                        Evidence: new Dictionary<string, object>
+                        {
+                            ["Vid"] = dev.Vid,
+                            ["Pid"] = dev.Pid,
+                            ["Manufacturer"] = dev.Manufacturer
+                        }
+                    );
+                }
+                else
+                {
+                    AuditLogger.LogEvent("AdvancedUsbDetector", DetectionSeverity.Info, "Arduino connected (alone/dev)", reason);
+                    continue;
+                }
             }
 
             // 3. Razer Anomaly (0x1532)
@@ -142,6 +195,7 @@ public class AdvancedUsbDetector : IDetector
                     var reason = $"VID:0x{dev.Vid} PID:0x{dev.Pid} Manufacturer:{dev.Manufacturer} SerialNumber:{(string.IsNullOrWhiteSpace(dev.SerialNumber) ? "none" : dev.SerialNumber)}";
                     return new DetectionResult(
                         Type: DetectionType.KMBOX_DETECTED,
+                         Severity: DetectionSeverity.Flag,
                         Confidence: 0.90f,
                         ReasonCode: reason,
                         Description: $"Spoofed Razer VID (0x1532) with non-standard product string: {dev.Product}",
@@ -155,26 +209,7 @@ public class AdvancedUsbDetector : IDetector
                 }
             }
 
-            // 4. Logitech Anomaly (0x046D)
-            if (vid == "046D")
-            {
-                if (string.IsNullOrWhiteSpace(serial) || serial == "00000000" || serial == "000000000000")
-                {
-                    var reason = $"VID:0x{dev.Vid} PID:0x{dev.Pid} Manufacturer:{dev.Manufacturer} SerialNumber:none";
-                    return new DetectionResult(
-                        Type: DetectionType.KMBOX_DETECTED,
-                        Confidence: 0.88f,
-                        ReasonCode: reason,
-                        Description: $"Spoofed Logitech VID (0x046D) with zero/missing serial number.",
-                        DescriptionFA: $"دستگاه با شناسه جعلی لاجیتک (0x046D) و شماره سریال صفر یا ناموجود.",
-                        Evidence: new Dictionary<string, object>
-                        {
-                            ["Vid"] = dev.Vid,
-                            ["SerialNumber"] = serial
-                        }
-                    );
-                }
-            }
+
 
             // 5. Composite Mouse + Keyboard simultaneously on single interface anomaly
             if (dev.IsMouseAndKeyboard)
@@ -182,6 +217,7 @@ public class AdvancedUsbDetector : IDetector
                 var reason = $"VID:0x{dev.Vid} PID:0x{dev.Pid} Manufacturer:{dev.Manufacturer} SerialNumber:{(string.IsNullOrWhiteSpace(dev.SerialNumber) ? "none" : dev.SerialNumber)}";
                 return new DetectionResult(
                     Type: DetectionType.KMBOX_DETECTED,
+                         Severity: DetectionSeverity.Flag,
                     Confidence: 0.89f,
                     ReasonCode: reason,
                     Description: $"Anomalous composite device claiming simultaneous mouse and keyboard interfaces.",
@@ -203,6 +239,7 @@ public class AdvancedUsbDetector : IDetector
                     var reason = $"VID:0x{dev.Vid} PID:0x{dev.Pid} Manufacturer:{dev.Manufacturer} SerialNumber:{(string.IsNullOrWhiteSpace(dev.SerialNumber) ? "none" : dev.SerialNumber)}";
                     return new DetectionResult(
                         Type: DetectionType.KMBOX_DETECTED,
+                         Severity: DetectionSeverity.Kick,
                         Confidence: 0.94f,
                         ReasonCode: reason,
                         Description: $"Polling rate anomaly: Measured ({dev.MeasuredPollingRate:F0}Hz) exceeds declared ({dev.DeclaredPollingRate:F0}Hz) by >20%.",

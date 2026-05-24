@@ -49,6 +49,7 @@ export const players = pgTable('players', {
   role: roleEnum('role').default('player').notNull(),
   teamId: uuid('team_id'), // FK to teams.id defined via relations/foreignKey
   banStatus: banStatusEnum('ban_status').default('clean').notNull(),
+  hwid: varchar('hwid', { length: 255 }),
   hardwareFingerprintHash: varchar('hardware_fingerprint_hash', { length: 64 }),
   ipHash: varchar('ip_hash', { length: 64 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),

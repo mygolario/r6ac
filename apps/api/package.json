@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js",
+    "build": "esbuild src/server.ts --bundle --platform=node --target=node20 --format=cjs --outfile=dist/server.cjs",
+    "start": "node dist/server.cjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --ext ts --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --ext ts --fix",
@@ -44,6 +44,7 @@
     "@types/node": "^20.12.12",
     "@types/ws": "^8.5.10",
     "drizzle-kit": "^0.21.2",
+    "esbuild": "^0.28.0",
     "eslint": "^8.57.0",
     "tsx": "^4.11.0",
     "typescript": "^5.4.5",

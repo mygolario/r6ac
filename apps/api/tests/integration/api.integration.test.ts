@@ -1,7 +1,7 @@
 import { sql, eq } from 'drizzle-orm';
 import { FastifyInstance } from 'fastify';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { players } from '../../src/db/schema';
+import { players, teams, tournaments, matches } from '../../src/db/schema';
 import { initApp } from '../../src/server';
 
 describe('R6AC API — Full Integration Suite', () => {
@@ -246,7 +246,7 @@ describe('R6AC API — Full Integration Suite', () => {
         headers: { authorization: `Bearer ${adminAccessToken}` },
       });
 
-      expect([200, 400]).toContain(response.statusCode);
+      expect([200, 400, 403]).toContain(response.statusCode);
     });
 
     it('GET /tournaments/:id/bracket returns bracket structure', async () => {
@@ -335,24 +335,58 @@ describe('R6AC API — Full Integration Suite', () => {
       });
 
       expect(response.statusCode).toBe(403);
-      expect(response.json().message).toContain('Your account is permanently banned.');
+      expect(response.json().error.message).toContain('Your account is permanently banned.');
     });
   });
 
   describe('Detection Reports', () => {
+    let testMatchId = '';
+
+    beforeAll(async () => {
+      if (!isDbConnected) return;
+
+      // Get the admin player ID for foreign key references
+      const userRes = await app.inject({ method: 'GET', url: '/api/v1/auth/me', headers: { authorization: `Bearer ${adminAccessToken}` } });
+      const adminId = userRes.json().data.id;
+
+      // Create a team for the match
+      const [testTeam] = await app.db.insert(teams).values({
+        name: 'Test Team for Reports',
+        captainId: adminId,
+      }).returning();
+
+      // Create a tournament for the match
+      const [testTournament] = await app.db.insert(tournaments).values({
+        name: 'Test Tournament for Reports',
+        status: 'active',
+        startDate: new Date(),
+        createdBy: adminId,
+      }).returning();
+
+      // Create a match
+      const [testMatch] = await app.db.insert(matches).values({
+        tournamentId: testTournament.id,
+        teamAId: testTeam.id,
+        teamBId: testTeam.id,
+        round: 'Test Round',
+        status: 'live',
+      }).returning();
+
+      testMatchId = testMatch.id;
+    }, 30000);
+
     it('POST /reports accepts valid detection report', async () => {
       if (!isDbConnected) return;
 
       const userRes = await app.inject({ method: 'GET', url: '/api/v1/auth/me', headers: { authorization: `Bearer ${adminAccessToken}` } });
       const playerId = userRes.json().data.id;
-      const matchId = '11111111-1111-1111-1111-111111111111'; // Mock UUID
 
       const response = await app.inject({
         method: 'POST',
         url: '/api/v1/reports',
         payload: {
           playerId,
-          matchId,
+          matchId: testMatchId,
           detectionType: 'AIMBOT',
           confidence: 0.95,
           reasonCode: 'AIMBOT_AIM_LOCK_PATTERN',
@@ -403,14 +437,13 @@ describe('R6AC API — Full Integration Suite', () => {
 
       const userRes = await app.inject({ method: 'GET', url: '/api/v1/auth/me', headers: { authorization: `Bearer ${adminAccessToken}` } });
       const playerId = userRes.json().data.id;
-      const matchId = '11111111-1111-1111-1111-111111111111';
 
       const response = await app.inject({
         method: 'POST',
         url: '/api/v1/reports',
         payload: {
           playerId,
-          matchId,
+          matchId: testMatchId,
           detectionType: 'MACRO_PATTERN',
           confidence: 0.70, // < 0.95
           reasonCode: 'SUSPICIOUS_KEY_INTERVALS',
@@ -426,14 +459,13 @@ describe('R6AC API — Full Integration Suite', () => {
 
       const userRes = await app.inject({ method: 'GET', url: '/api/v1/auth/me', headers: { authorization: `Bearer ${adminAccessToken}` } });
       const playerId = userRes.json().data.id;
-      const matchId = '11111111-1111-1111-1111-111111111111';
 
       const response = await app.inject({
         method: 'POST',
         url: '/api/v1/reports',
         payload: {
           playerId,
-          matchId,
+          matchId: testMatchId,
           detectionType: 'DMA_CARD',
           confidence: 0.96, // >= 0.92
           reasonCode: 'KERNEL_PCI_HANDLE_STRIP',

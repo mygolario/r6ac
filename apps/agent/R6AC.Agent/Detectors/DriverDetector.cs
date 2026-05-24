@@ -51,6 +51,7 @@ public class DriverDetector : IDetector
 
                         return new DetectionResult(
                             Type: DetectionType.FORBIDDEN_DRIVER,
+                            Severity: DetectionSeverity.Kick,
                             Confidence: 0.95f,
                             ReasonCode: "SUSPICIOUS_KERNEL_DRIVER",
                             Description: $"Suspicious kernel driver detected: {obj["Name"]} ({sig})",
@@ -84,6 +85,7 @@ public class DriverDetector : IDetector
 
                             return new DetectionResult(
                                 Type: DetectionType.FORBIDDEN_DRIVER,
+                                Severity: DetectionSeverity.Kick,
                                 Confidence: 0.90f,
                                 ReasonCode: "SUSPICIOUS_REGISTRY_DRIVER_SERVICE",
                                 Description: $"Suspicious driver service registered: {subKeyName}",

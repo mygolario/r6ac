@@ -10,7 +10,19 @@ export class PlayerService {
     banStatus?: 'clean' | 'flagged' | 'banned';
     teamId?: string;
   }) {
-    return PlayerRepository.findAll(params);
+    const result = await PlayerRepository.findAll(params);
+    const connectedUserIds = WebSocketService.getConnectedUserIds();
+
+    const mappedItems = result.items.map((player) => ({
+      ...player,
+      isLive: connectedUserIds.has(player.id)
+    }));
+
+    return {
+      ...result,
+      items: mappedItems,
+      players: mappedItems,
+    };
   }
 
   static async getPlayerById(id: string) {
@@ -61,5 +73,13 @@ export class PlayerService {
   static async updateHardwareFingerprint(playerId: string, fingerprintHash: string) {
     const hashed = EncryptionService.hashSha256(fingerprintHash);
     return PlayerRepository.updateHardwareFingerprint(playerId, hashed);
+  }
+
+  static async updateHwid(playerId: string, hwid: string) {
+    return PlayerRepository.updateHwid(playerId, hwid);
+  }
+
+  static async resetHwid(playerId: string) {
+    return PlayerRepository.updateHwid(playerId, null);
   }
 }

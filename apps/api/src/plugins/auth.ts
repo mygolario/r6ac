@@ -4,7 +4,8 @@ import fp from 'fastify-plugin';
 import { UserRole } from '../types';
 
 const authPlugin: FastifyPluginAsync = async (fastify) => {
-  const secret = process.env.JWT_ACCESS_SECRET || 'change_me_in_production';
+  const secret =
+    process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || 'change_me_in_production';
 
   await fastify.register(fastifyJwt, {
     secret,

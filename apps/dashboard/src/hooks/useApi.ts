@@ -45,6 +45,22 @@ export function usePlayer(id: string) {
   });
 }
 
+export function useResetHwid() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiClient(`/players/${id}/reset-hwid`, {
+        method: 'POST',
+      });
+      return res.data;
+    },
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ['players', id] });
+      queryClient.invalidateQueries({ queryKey: ['players'] });
+    },
+  });
+}
+
 // Tournaments Hooks
 export function useTournaments(params?: { page: number; limit: number; status?: string }) {
   return useQuery({
@@ -67,6 +83,22 @@ export function useTournament(id: string) {
     queryFn: async () => {
       const res = await apiClient(`/tournaments/${id}`);
       return res.data;
+    },
+  });
+}
+
+export function useCreateTournament() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { nameFA: string; name: string; prizePool: number; startDate: string }) => {
+      const res = await apiClient('/tournaments', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      });
+      return res.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tournaments'] });
     },
   });
 }

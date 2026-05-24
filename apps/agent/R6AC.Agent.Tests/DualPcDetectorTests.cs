@@ -7,7 +7,7 @@ namespace R6AC.Agent.Tests;
 public class DualPcDetectorTests
 {
     [Fact]
-    public async Task ScanAsync_ElgatoCaptureCard_ShouldDetectDualPcPattern()
+    public async Task ScanAsync_ElgatoCaptureCard_ShouldReturnNullWhenObsNotRunning()
     {
         var detector = new DualPcDetector();
         detector.FeedTestingData(
@@ -18,9 +18,7 @@ public class DualPcDetectorTests
         var session = new AgentSession("P1", "M1", new SessionToken("T1", "P1", "M1", DateTime.UtcNow, DateTime.UtcNow.AddHours(1), "SIG"), "HASH");
         var result = await detector.ScanAsync(session, CancellationToken.None);
 
-        Assert.NotNull(result);
-        Assert.Equal(DetectionType.DUAL_PC_PATTERN, result.Type);
-        Assert.Equal("CAPTURE_CARD_DISPLAY_ADAPTER", result.ReasonCode);
+        Assert.Null(result); // Expected null because OBS is not running to confirm streaming cheat
     }
 
     [Fact]

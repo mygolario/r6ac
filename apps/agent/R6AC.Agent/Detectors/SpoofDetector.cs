@@ -69,66 +69,20 @@ public class SpoofDetector : IDetector
     {
         if (!OperatingSystem.IsWindows()) return null;
 
-        // 1. Disk Serial Consistency Check
-        var wmiDisk = _useTestData ? _testWmiDiskSerial : GetWmiDiskSerial();
-        var regDisk = _useTestData ? _testRegDiskSerial : GetRegistryDiskSerial();
-        var ioctlDisk = _useTestData ? _testIoctlDiskSerial : GetIoctlDiskSerial();
-
-        if (!string.IsNullOrWhiteSpace(wmiDisk) && !string.IsNullOrWhiteSpace(regDisk) && !string.IsNullOrWhiteSpace(ioctlDisk))
-        {
-            if (wmiDisk != regDisk || wmiDisk != ioctlDisk || regDisk != ioctlDisk)
-            {
-                return new DetectionResult(
-                    Type: DetectionType.HWID_SPOOF,
-                    Confidence: 0.92f,
-                    ReasonCode: "DISK_SERIAL_INCONSISTENCY_SPOOF",
-                    Description: $"HWID Spoofer detected: Disk serial mismatch between WMI ({wmiDisk}), Registry ({regDisk}), and IOCTL ({ioctlDisk}).",
-                    DescriptionFA: $"نرم‌افزار جعل شناسه (Spoofer) کشف شد: ناهمخوانی سریال دیسک در WMI ({wmiDisk})، رجیستری ({regDisk}) و درایور ({ioctlDisk}).",
-                    Evidence: new Dictionary<string, object>
-                    {
-                        ["WmiSerial"] = wmiDisk,
-                        ["RegistrySerial"] = regDisk,
-                        ["IoctlSerial"] = ioctlDisk
-                    }
-                );
-            }
-        }
-
-        // 2. MAC Address Consistency Check
-        var wmiMac = _useTestData ? _testWmiMac : GetWmiMacAddress();
-        var regMac = _useTestData ? _testRegMac : GetRegistryMacAddress();
-        var apiMac = _useTestData ? _testApiMac : GetApiMacAddress();
-
-        if (!string.IsNullOrWhiteSpace(wmiMac) && !string.IsNullOrWhiteSpace(regMac) && !string.IsNullOrWhiteSpace(apiMac))
-        {
-            if (wmiMac != regMac || wmiMac != apiMac)
-            {
-                return new DetectionResult(
-                    Type: DetectionType.HWID_SPOOF,
-                    Confidence: 0.88f,
-                    ReasonCode: "MAC_ADDRESS_INCONSISTENCY_SPOOF",
-                    Description: $"MAC Address spoofing detected: Mismatch between WMI ({wmiMac}), Registry ({regMac}), and IP Helper API ({apiMac}).",
-                    DescriptionFA: $"جعل آدرس فیزیکی (MAC) کشف شد: ناهمخوانی بین WMI ({wmiMac})، رجیستری ({regMac}) و توابع شبکه ({apiMac}).",
-                    Evidence: new Dictionary<string, object>
-                    {
-                        ["WmiMac"] = wmiMac,
-                        ["RegistryMac"] = regMac,
-                        ["ApiMac"] = apiMac
-                    }
-                );
-            }
-        }
+        // 1. Hardware ID Consistency Check (DISABLED due to naive string formatting differences across APIs causing false positives)
+        // WMI and Registry return disk serials in completely different formats (Manufacturer Serial vs Model String).
 
         // 3. SMBIOS Serial Number Check
         var smbios = _useTestData ? _testSmbiosSerial : GetSmbiosSerialNumber();
         if (!string.IsNullOrWhiteSpace(smbios))
         {
             var smbiosTrimmed = smbios.Trim();
-            if (smbiosTrimmed == "00000000" || smbiosTrimmed == "FFFFFFFF" || smbiosTrimmed == "To Be Filled By O.E.M." || smbiosTrimmed == "Default string")
+            if (smbiosTrimmed == "00000000" || smbiosTrimmed == "FFFFFFFF")
             {
                 return new DetectionResult(
                     Type: DetectionType.HWID_SPOOF,
-                    Confidence: 0.65f,
+                         Severity: DetectionSeverity.Flag,
+                    Confidence: 0.40f,
                     ReasonCode: "SMBIOS_DEFAULT_SERIAL_ANOMALY",
                     Description: $"Suspicious SMBIOS serial string indicating uninitialized or spoofed firmware table: '{smbiosTrimmed}'",
                     DescriptionFA: $"رشته سریال مشکوک SMBIOS نشان‌دهنده دستکاری یا عدم مقداردهی بایوس: '{smbiosTrimmed}'",
@@ -150,6 +104,7 @@ public class SpoofDetector : IDetector
             {
                 return new DetectionResult(
                     Type: DetectionType.HWID_SPOOF,
+                         Severity: DetectionSeverity.Flag,
                     Confidence: 0.75f,
                     ReasonCode: "VOLUME_SERIAL_DYNAMIC_CHANGE",
                     Description: $"Volume serial number changed dynamically during active registration ({volHex}). Potential spoofer activity.",

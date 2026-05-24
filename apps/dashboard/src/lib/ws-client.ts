@@ -3,10 +3,11 @@ import { useAuthStore } from '../stores/auth-store';
 
 const WS_URL = import.meta.env.VITE_WS_URL 
   ? `${import.meta.env.VITE_WS_URL}/ws` 
-  : 'ws://localhost:4000/ws';
+  : 'wss://r6ac-api.liara.run/ws';
 
 let ws: WebSocket | null = null;
 let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+let wsReconnectAttempts = 0;
 
 export function initWsClient(queryClient: QueryClient) {
   if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
@@ -15,6 +16,7 @@ export function initWsClient(queryClient: QueryClient) {
 
   const { accessToken } = useAuthStore.getState();
   const url = accessToken ? `${WS_URL}?token=${accessToken}` : WS_URL;
+
 
   try {
     ws = new WebSocket(url);
@@ -33,7 +35,7 @@ export function initWsClient(queryClient: QueryClient) {
       } catch (err) {}
     };
 
-    ws.onclose = () => {
+    ws.onclose = (ev) => {
       ws = null;
       reconnectTimer = setTimeout(() => initWsClient(queryClient), 3000);
     };

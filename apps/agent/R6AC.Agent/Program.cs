@@ -1,6 +1,6 @@
 using System.IO.Pipes;
 using System.Text;
-using System.Text.Json;
+using System.Net.Http.Json;
 using R6AC.Agent.Core;
 using R6AC.Agent.Detectors;
 using R6AC.Agent.Hardware;
@@ -51,7 +51,7 @@ public class Program
         Log.Information("Self-integrity verified successfully.");
 
         // 2. Lock Critical Memory Regions (PAGE_EXECUTE_READ)
-        MemoryProtection.LockCriticalRegions();
+        // MemoryProtection.LockCriticalRegions(); // DISABLED: Causes AccessViolationException when VPN/Proxy tools (like Electro) try to inject Winsock hooks.
 
         // 3. Check for Updates
         var updateSvc = new UpdateService(config);
@@ -80,11 +80,37 @@ public class Program
         var hwHash = hwFingerprinter.GetFingerprintHash();
         Log.Information("Hardware Fingerprint SHA-256: {HwHash}", hwHash);
 
-        var playerId = args.Length > 0 ? args[0] : "PLAYER_DEFAULT_ID";
+        Console.WriteLine("======================================");
+        Console.WriteLine("   R6AC Anticheat Agent - Login");
+        Console.WriteLine("======================================");
+        Console.Write("Username/Email: ");
+        var username = Console.ReadLine() ?? "";
+        Console.Write("Password: ");
+        var password = ReadPassword();
+
+        Console.WriteLine("Authenticating...");
+        var baseUrl = StringVault.Get(VaultKey.ApiBaseUrl);
+        using var authClient = new HttpClient { BaseAddress = new Uri(baseUrl) };
+        var authRes = await authClient.PostAsJsonAsync("/api/v1/agent/auth", new { username, password, hwid = hwHash });
+        if (!authRes.IsSuccessStatusCode)
+        {
+            var err = await authRes.Content.ReadAsStringAsync();
+            Log.Fatal("Authentication failed! Status: {Status}, Error: {Error}", authRes.StatusCode, err);
+            Environment.Exit(1);
+            return;
+        }
+
+        var authData = await authRes.Content.ReadFromJsonAsync<JsonElement>();
+        var token = authData.GetProperty("token").GetString() ?? "";
+        var apiPlayerId = authData.GetProperty("playerId").GetString() ?? "";
+
+        config.ServiceToken = token;
+
+        var playerId = apiPlayerId;
         var matchId = args.Length > 1 ? args[1] : "MATCH_DEFAULT_ID";
 
         var sessionToken = new SessionToken(
-            TokenId: Guid.NewGuid().ToString(),
+            TokenId: token,
             PlayerId: playerId,
             MatchId: matchId,
             IssuedAt: DateTime.UtcNow,
@@ -115,6 +141,9 @@ public class Program
             timingAnalyzer
         };
 
+        var accumulator = new SuspicionAccumulator();
+        var cooldown = new DetectionCooldown();
+
         Log.Information("Initialization complete. Starting monitoring loop (Interval: {Interval}s)...", config.ScanIntervalSeconds);
 
         try
@@ -126,23 +155,16 @@ public class Program
                 // 0a. Anti-Debug Check (Silent Failure mode triggers internally if debugger present)
                 AntiDebug.RunAllChecks();
 
-                // 0b. Method Prologue Integrity Check
-                if (!MemoryProtection.CheckAllCriticalMethods(out var hookedMethod))
-                {
-                    Log.Warning("Critical method prologue hook detected on {Method}!", hookedMethod);
-                    var evidence = new Dictionary<string, object> { ["HookedMethod"] = hookedMethod };
-                    var dRes = new DetectionResult(
-                        Type: DetectionType.TAMPER_DETECTED,
-                        Confidence: 1.0f,
-                        ReasonCode: "METHOD_PROLOGUE_HOOKED_" + hookedMethod.Replace(".", "_").ToUpperInvariant(),
-                        Description: $"Runtime method hook detected on {hookedMethod}.",
-                        DescriptionFA: $"دستکاری و هوک در کدهای اجرایی تشخیص داده شد ({hookedMethod}).",
-                        Evidence: evidence
-                    );
+                // 0b. Method Prologue Integrity Check (DISABLED)
+                // In .NET 8, GetFunctionPointer() points to JMP stubs for Tiered Compilation.
+                // This triggers false positives. Binary integrity is already verified by SHA-256 manifest.
 
-                    var report = BuildReport(dRes, session, config);
-                    await reportQueue.EnqueueAsync(report);
-                    TriggerAutoKick(session, dRes);
+                // Global Gate: Only run full scan if game is running
+                if (!GameProcessMonitor.IsGameRunning("RainbowSix"))
+                {
+                    Log.Debug("Game not running. Waiting for process...");
+                    await Task.Delay(TimeSpan.FromSeconds(config.ScanIntervalSeconds), cts.Token);
+                    continue;
                 }
 
                 foreach (var detector in detectors)
@@ -154,15 +176,38 @@ public class Program
                         var result = await detector.ScanAsync(session, cts.Token);
                         if (result != null)
                         {
-                            Log.Warning("Detection triggered by {DetectorName}: {ReasonCode} ({Confidence:P0})",
-                                detector.DetectorName, result.ReasonCode, result.Confidence);
-
-                            var report = BuildReport(result, session, config);
-                            await reportQueue.EnqueueAsync(report);
-
-                            if (result.Confidence >= config.AutoKickThreshold)
+                            if (result.Severity == DetectionSeverity.Info)
                             {
-                                TriggerAutoKick(session, result);
+                                accumulator.AddSignal(session.PlayerId, result);
+                                continue;
+                            }
+
+                            accumulator.AddSignal(session.PlayerId, result);
+                            var decision = accumulator.Evaluate(session.PlayerId);
+
+                            if (decision.Type == EscalationDecisionType.CreateReport)
+                            {
+                                if (cooldown.IsOnCooldown(session.PlayerId, result.Type))
+                                {
+                                    Log.Debug("Detection {Type} is on cooldown. Skipping report.", result.Type);
+                                    continue;
+                                }
+
+                                cooldown.RecordFired(session.PlayerId, result.Type);
+
+                                // Use accumulator's computed confidence if it combined signals
+                                var reportedResult = result with { Confidence = Math.Max(result.Confidence, decision.ComputedConfidence) };
+
+                                Log.Warning("Detection escalated: {ReasonCode} ({Confidence:P0})",
+                                    reportedResult.ReasonCode, reportedResult.Confidence);
+
+                                var report = BuildReport(reportedResult, session, config);
+                                await reportQueue.EnqueueAsync(report);
+
+                                if (reportedResult.Confidence >= config.AutoKickThreshold)
+                                {
+                                    TriggerAutoKick(session, reportedResult);
+                                }
                             }
                         }
                     }
@@ -201,7 +246,7 @@ public class Program
             PlayerId: session.PlayerId,
             MatchId: session.MatchId,
             DetectionType: result.Type.ToString(),
-            Confidence: result.Confidence,
+                        Confidence: result.Confidence,
             ReasonCode: result.ReasonCode,
             EvidenceJson: evidenceJson,
             RequiresHumanReview: requiresReview,
@@ -235,5 +280,29 @@ public class Program
 
         Log.Information("Attempting to sync {Count} pending reports to server...", pending.Count);
         await reporter.SyncReports(queue, ct);
+    }
+
+    private static string ReadPassword()
+    {
+        var pass = string.Empty;
+        ConsoleKey key;
+        do
+        {
+            var keyInfo = Console.ReadKey(intercept: true);
+            key = keyInfo.Key;
+
+            if (key == ConsoleKey.Backspace && pass.Length > 0)
+            {
+                Console.Write("\b \b");
+                pass = pass[0..^1];
+            }
+            else if (!char.IsControl(keyInfo.KeyChar))
+            {
+                Console.Write("*");
+                pass += keyInfo.KeyChar;
+            }
+        } while (key != ConsoleKey.Enter);
+        Console.WriteLine();
+        return pass;
     }
 }

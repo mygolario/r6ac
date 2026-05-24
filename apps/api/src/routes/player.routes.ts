@@ -67,6 +67,22 @@ const playerRoutes: FastifyPluginAsync = async (fastify) => {
       });
     }
   );
+
+  fastify.post(
+    '/:id/reset-hwid',
+    { onRequest: [fastify.authenticate, fastify.requireRoles(['tournament_admin', 'super_admin'])] },
+    async (request, reply) => {
+      const { id } = request.params as { id: string };
+      const result = await PlayerService.resetHwid(id);
+
+      return reply.status(200).send({
+        success: true,
+        data: result,
+        meta: { timestamp: new Date().toISOString() },
+        error: null,
+      });
+    }
+  );
 };
 
 export default playerRoutes;

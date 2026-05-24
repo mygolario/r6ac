@@ -1,5 +1,7 @@
 using System.Diagnostics;
+using System.Linq;
 using R6AC.Agent.Core;
+using R6AC.Agent.Utils;
 
 namespace R6AC.Agent.Detectors;
 
@@ -47,6 +49,11 @@ public class ProcessDetector : IDetector
             {
                 var procName = proc.ProcessName.ToLowerInvariant();
 
+                if (Whitelist.SafeProcessNames.Contains(procName))
+                {
+                    continue; // Skip safely without spamming audit log for basic services
+                }
+
                 // 1. Check Multiple Game Instances
                 if (procName.Contains("rainbowsix") || procName.Contains("r6s"))
                 {
@@ -61,6 +68,7 @@ public class ProcessDetector : IDetector
 
                         return new DetectionResult(
                             Type: DetectionType.FORBIDDEN_PROCESS,
+                         Severity: DetectionSeverity.Flag,
                             Confidence: 0.85f,
                             ReasonCode: "MULTIPLE_GAME_INSTANCES",
                             Description: "Multiple instances of Rainbow Six Siege detected running simultaneously.",
@@ -82,8 +90,11 @@ public class ProcessDetector : IDetector
                             { "SignatureMatched", sig.NameSubstring }
                         };
 
+                        DetectionSeverity sev = sig.Confidence >= 0.95f ? DetectionSeverity.Kick : DetectionSeverity.Flag;
+
                         return new DetectionResult(
                             Type: sig.Type,
+                         Severity: sev,
                             Confidence: sig.Confidence,
                             ReasonCode: sig.ReasonCode,
                             Description: $"Forbidden process detected running: {proc.ProcessName} ({sig.ReasonCode})",
@@ -93,34 +104,7 @@ public class ProcessDetector : IDetector
                     }
                 }
 
-                // 3. Check Nameless / Windowless High CPU Background Processes
-                if (string.IsNullOrWhiteSpace(proc.MainWindowTitle))
-                {
-                    // To avoid win32 access denied exceptions on idle/system, check working set & threads
-                    if (proc.Threads.Count > 30 && proc.WorkingSet64 > 100_000_000)
-                    {
-                        // Potential heavy background injector/miner/spoofer
-                        if (!procName.Contains("svchost") && !procName.Contains("explorer") && !procName.Contains("system") && !procName.Contains("msmpeng"))
-                        {
-                            var evidence = new Dictionary<string, object>
-                            {
-                                { "ProcessId", proc.Id },
-                                { "ProcessName", proc.ProcessName },
-                                { "ThreadCount", proc.Threads.Count },
-                                { "MemoryBytes", proc.WorkingSet64 }
-                            };
-
-                            return new DetectionResult(
-                                Type: DetectionType.FORBIDDEN_PROCESS,
-                                Confidence: 0.65f,
-                                ReasonCode: "SUSPICIOUS_STATELESS_HIGH_RESOURCE_PROCESS",
-                                Description: $"Suspicious background process with high resource consumption and no window: {proc.ProcessName}",
-                                DescriptionFA: $"پردازش پس‌زمینه مشکوک با مصرف منابع بالا و بدون پنجره: {proc.ProcessName}",
-                                Evidence: evidence
-                            );
-                        }
-                    }
-                }
+                // Removed unreliable stateless high resource process check
             }
             catch
             {

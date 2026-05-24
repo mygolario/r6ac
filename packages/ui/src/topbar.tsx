@@ -10,6 +10,7 @@ export interface TopBarProps extends React.HTMLAttributes<HTMLElement> {
   userName?: string;
   userInitials?: string;
   onLogout?: () => void;
+  onNotificationsClick?: () => void;
 }
 
 export const TopBar = React.forwardRef<HTMLElement, TopBarProps>(
@@ -22,6 +23,7 @@ export const TopBar = React.forwardRef<HTMLElement, TopBarProps>(
       userName = 'User',
       userInitials = 'U',
       onLogout,
+      onNotificationsClick,
       ...props
     },
     ref
@@ -49,7 +51,7 @@ export const TopBar = React.forwardRef<HTMLElement, TopBarProps>(
             <span className="uppercase font-mono">{currentLang}</span>
           </button>
 
-          <button className="relative text-text-secondary hover:text-text-primary transition-colors focus:outline-none">
+          <button onClick={onNotificationsClick} className="relative text-text-secondary hover:text-text-primary transition-colors focus:outline-none">
             <Bell className="h-5 w-5" />
             <span className="absolute top-0 end-0 h-2 w-2 rounded-full bg-primary" />
           </button>

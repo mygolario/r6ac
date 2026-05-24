@@ -1,4 +1,4 @@
-FROM node:20-alpine AS builder
+FROM hub.hamdocker.ir/library/node:20-alpine AS builder
 ARG VITE_API_BASE_URL
 ARG VITE_WS_URL
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
@@ -30,7 +30,7 @@ RUN pnpm --filter @r6ac/dashboard build
 # ──────────────────────────────────────────────
 # Use node:20-alpine (already cached on Liara) instead of nginx:alpine
 # nginx:alpine requires pulling from Docker Hub which is blocked from Iran servers
-FROM node:20-alpine AS runner
+FROM hub.hamdocker.ir/library/node:20-alpine AS runner
 WORKDIR /app
 
 # Use Liara npm mirror to install serve

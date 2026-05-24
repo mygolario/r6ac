@@ -12,7 +12,7 @@ public class BehavioralDetectorTests
         var clicks = new List<long>();
         long start = 100000;
 
-        for (int i = 0; i < 25; i++)
+        for (int i = 0; i < 35; i++)
         {
             clicks.Add(start + i * 100); // exactly 100ms apart -> 0 std dev
         }
@@ -23,7 +23,7 @@ public class BehavioralDetectorTests
         Assert.NotNull(res);
         Assert.Equal(DetectionType.TRIGGERBOT, res.Type);
         Assert.Equal("INHUMAN_CLICK_REGULARITY", res.ReasonCode);
-        Assert.Equal(0.88f, res.Confidence);
+        Assert.Equal(0.93f, res.Confidence);
     }
 
     [Fact]
@@ -43,7 +43,7 @@ public class BehavioralDetectorTests
 
         Assert.NotNull(res);
         Assert.Equal(DetectionType.MACRO_TIMING, res.Type);
-        Assert.Equal("EXCESSIVE_STRAIGHT_LINE_MOVEMENTS", res.ReasonCode);
+        Assert.Equal("STRAIGHT_LINE_MOVEMENTS", res.ReasonCode);
         Assert.True(res.Confidence >= 0.60f);
     }
 

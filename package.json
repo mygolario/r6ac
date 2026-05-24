@@ -12,7 +12,12 @@
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "clean": "turbo run clean",
-    "storybook": "turbo run storybook"
+    "storybook": "turbo run storybook",
+    "deploy:api": "node scripts/prepare-api-standalone.mjs && node scripts/liara-deploy.mjs",
+    "deploy:api:watch": "node scripts/prepare-api-standalone.mjs && liara deploy --path deploy/r6ac-api",
+    "liara:diagnose": "node scripts/liara-diagnose.mjs",
+    "liara:disable-zdt": "node scripts/liara-diagnose.mjs --disable-zdt",
+    "deploy:dashboard": "node scripts/copy-liara-config.mjs dashboard && liara deploy --path . --dockerfile apps/dashboard/Dockerfile --build-arg=\"VITE_API_BASE_URL=https://r6ac-api.liara.run\" --build-arg=\"VITE_WS_URL=wss://r6ac-api.liara.run\""
   },
   "devDependencies": {
     "turbo": "latest",

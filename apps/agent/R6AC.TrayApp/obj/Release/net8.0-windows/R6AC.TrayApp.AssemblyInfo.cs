@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("R6AC.TrayApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4bccc5fad452931708bb92c9e4db2d03ee42b73a")]
 [assembly: System.Reflection.AssemblyProductAttribute("R6AC.TrayApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("R6AC.TrayApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

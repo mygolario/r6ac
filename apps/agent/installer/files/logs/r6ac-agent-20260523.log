@@ -1,0 +1,4 @@
+2026-05-23 02:42:33.365 +03:30 [INF] R6AC Anti-Cheat Client Agent (Phase 5 Hardened) starting...
+2026-05-23 02:42:33.460 +03:30 [WRN] integrity-manifest.json not found in directory. Proceeding unverified.
+2026-05-23 02:42:33.460 +03:30 [INF] Self-integrity verified successfully.
+2026-05-23 02:42:33.461 +03:30 [INF] Critical memory regions locked successfully (PAGE_EXECUTE_READ).

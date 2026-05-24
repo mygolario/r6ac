@@ -2,6 +2,15 @@ import { sql } from 'drizzle-orm';
 import { FastifyInstance } from 'fastify';
 
 export async function healthRoutes(fastify: FastifyInstance): Promise<void> {
+  // Liveness probe — always 200 when the HTTP server is up (Liara/Docker health checks)
+  fastify.get('/health/live', async (_request, reply) => {
+    return reply.status(200).send({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+    });
+  });
+
   fastify.get('/health', {
     schema: {
       response: {

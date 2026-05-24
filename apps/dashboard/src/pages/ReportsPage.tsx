@@ -58,8 +58,8 @@ export const ReportsPage = () => {
     const username = player ? (isRtl && player.usernameFA ? player.usernameFA : player.username) : '';
 
     const matchesSearch =
-      username.toLowerCase().includes(search.toLowerCase()) ||
-      report.playerId.toLowerCase().includes(search.toLowerCase());
+      (username || '').toLowerCase().includes((search || '').toLowerCase()) ||
+      (report.playerId || '').toLowerCase().includes((search || '').toLowerCase());
 
     const matchesType = typeFilter === 'ALL' || report.detectionType === typeFilter;
     const matchesConfidence = report.confidence >= minConfidence;

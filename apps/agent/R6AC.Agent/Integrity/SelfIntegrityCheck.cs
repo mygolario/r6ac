@@ -71,6 +71,7 @@ public class SelfIntegrityCheck
 
             var res = new DetectionResult(
                 Type: DetectionType.TAMPER_DETECTED,
+                Severity: DetectionSeverity.Kick,
                 Confidence: 1.0f,
                 ReasonCode: "DEBUGGER_ATTACHED_TO_AGENT",
                 Description: "Fatal: A debugger was detected attached to the anti-cheat agent process.",
@@ -111,6 +112,7 @@ public class SelfIntegrityCheck
 
                         var res = new DetectionResult(
                             Type: DetectionType.TAMPER_DETECTED,
+                            Severity: DetectionSeverity.Kick,
                             Confidence: 1.0f,
                             ReasonCode: "MANIFEST_SIGNATURE_MISMATCH",
                             Description: "Integrity manifest signature is invalid. Agent tampering detected.",
@@ -140,6 +142,7 @@ public class SelfIntegrityCheck
 
                                 var res = new DetectionResult(
                                     Type: DetectionType.TAMPER_DETECTED,
+                                    Severity: DetectionSeverity.Kick,
                                     Confidence: 1.0f,
                                     ReasonCode: "AGENT_ASSEMBLY_HASH_MISMATCH",
                                     Description: $"Binary file tampered: {fileInfo.Name}. Expected: {fileInfo.Sha256}, Got: {actualHash}",
@@ -179,7 +182,7 @@ public class SelfIntegrityCheck
                 PlayerId: "SYSTEM_DEFENSE",
                 MatchId: "NONE",
                 DetectionType: res.Type.ToString(),
-                Confidence: res.Confidence,
+                        Confidence: res.Confidence,
                 ReasonCode: res.ReasonCode,
                 EvidenceJson: evidenceJson,
                 RequiresHumanReview: false,

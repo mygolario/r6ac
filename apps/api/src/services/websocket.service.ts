@@ -23,6 +23,16 @@ export class WebSocketService {
   private static isSubscribed = false;
   private static CHANNEL = 'r6ac:ws:events';
 
+  static getConnectedUserIds(): Set<string> {
+    const userIds = new Set<string>();
+    for (const client of this.clients) {
+      if (client.userId) {
+        userIds.add(client.userId);
+      }
+    }
+    return userIds;
+  }
+
   static async init(fastify: FastifyInstance) {
     if (!this.isSubscribed && fastify.redisSub) {
       try {

@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.NetworkInformation;
 using System.Text.RegularExpressions;
 using R6AC.Agent.Core;
+using R6AC.Agent.Utils;
 
 namespace R6AC.Agent.Detectors;
 
@@ -71,6 +72,9 @@ public class DualPcDetector : IDetector
         var adapters = _useTestingData ? _testingAdapters : GetDisplayAdapters();
         var usbIds = _useTestingData ? _testingUsbPnpIds : GetConnectedUsbDeviceIds();
 
+        bool captureCardPresent = false;
+        string? captureEvidence = null;
+
         // 1. Display Adapter / Video Controller Anomaly Checks
         foreach (var adapter in adapters)
         {
@@ -81,19 +85,9 @@ public class DualPcDetector : IDetector
             {
                 if (nameLower.Contains(kw))
                 {
-                    return new DetectionResult(
-                        Type: DetectionType.DUAL_PC_PATTERN,
-                        Confidence: 0.70f,
-                        ReasonCode: "CAPTURE_CARD_DISPLAY_ADAPTER",
-                        Description: $"Hardware capture card detected: {adapter.Name}",
-                        DescriptionFA: $"کارت کپچر سخت‌افزاری متصل به سیستم کشف شد: {adapter.Name}",
-                        Evidence: new Dictionary<string, object>
-                        {
-                            ["AdapterName"] = adapter.Name,
-                            ["DeviceId"] = adapter.DeviceId,
-                            ["MatchedKeyword"] = kw
-                        }
-                    );
+                    captureCardPresent = true;
+                    captureEvidence = adapter.Name;
+                    break;
                 }
             }
 
@@ -104,6 +98,7 @@ public class DualPcDetector : IDetector
                 {
                     return new DetectionResult(
                         Type: DetectionType.DUAL_PC_PATTERN,
+                         Severity: DetectionSeverity.Suspicious,
                         Confidence: 0.75f,
                         ReasonCode: "VIRTUAL_DISPLAY_ADAPTER",
                         Description: $"Virtual/Indirect display driver detected: {adapter.Name}",
@@ -126,6 +121,7 @@ public class DualPcDetector : IDetector
                 {
                     return new DetectionResult(
                         Type: DetectionType.DUAL_PC_PATTERN,
+                         Severity: DetectionSeverity.Suspicious,
                         Confidence: 0.80f,
                         ReasonCode: "PHANTOM_DISPLAY_CONNECTED",
                         Description: $"Phantom secondary display detected with 0x0 resolution ({adapter.Name}).",
@@ -150,37 +146,51 @@ public class DualPcDetector : IDetector
                 var vid = match.Groups[1].Value.ToUpperInvariant();
                 if (CaptureUsbVids.Contains(vid))
                 {
-                    return new DetectionResult(
-                        Type: DetectionType.DUAL_PC_PATTERN,
-                        Confidence: 0.70f,
-                        ReasonCode: $"USB_CAPTURE_DEVICE_VID_{vid}",
-                        Description: $"USB capture card connected (VID: 0x{vid}). Dual-PC streaming pattern.",
-                        DescriptionFA: $"کارت کپچر USB متصل است (شناسه: 0x{vid}). الگوی استریم دوگانه.",
-                        Evidence: new Dictionary<string, object>
-                        {
-                            ["PnpId"] = pnpId,
-                            ["Vid"] = vid
-                        }
-                    );
+                    captureCardPresent = true;
+                    captureEvidence = $"USB VID: {vid}";
+                    break;
                 }
             }
         }
 
         // 3. Network UDP Stream Anomaly (>5MB/s outbound traffic to LAN IP)
-        if (CheckHighVolumeUdpStream())
+        bool highNetworkOut = CheckHighVolumeUdpStream();
+
+        // 4. OBS & Streaming Rules
+        bool obsRunning = System.Diagnostics.Process.GetProcesses().Any(p => p.ProcessName.ToLowerInvariant().Contains("obs64") || p.ProcessName.ToLowerInvariant().Contains("obs32") || p.ProcessName.ToLowerInvariant().Contains("streamlabs"));
+        bool gameRunning = GameProcessMonitor.IsGameRunning("RainbowSix");
+
+        if (obsRunning)
         {
-            return new DetectionResult(
-                Type: DetectionType.DUAL_PC_PATTERN,
-                Confidence: 0.85f,
-                ReasonCode: "HIGH_VOLUME_LAN_UDP_STREAM",
-                Description: $"High bandwidth outbound UDP traffic (>5MB/s) to LAN IP during match. Potential screen streaming.",
-                DescriptionFA: $"ترافیک خروجی سنگین UDP (بیش از ۵ مگابایت بر ثانیه) به آی‌پی محلی در حین بازی. احتمال استریم تصویر به سیستم دوم.",
-                Evidence: new Dictionary<string, object>
-                {
-                    ["BandwidthThresholdMbps"] = 40.0,
-                    ["StreamProtocol"] = "UDP"
-                }
-            );
+            if (gameRunning && (captureCardPresent || highNetworkOut))
+            {
+                return new DetectionResult(
+                    Type: DetectionType.DUAL_PC_STREAM,
+                         Severity: DetectionSeverity.Suspicious,
+                    Confidence: 0.50f,
+                    ReasonCode: "OBS_WITH_CAPTURE_OR_STREAM",
+                    Description: "Streaming software running alongside game with capture card or high network out detected.",
+                    DescriptionFA: "نرم‌افزار استریم همزمان با بازی و کارت کپچر یا ترافیک شبکه بالا کشف شد.",
+                    Evidence: new Dictionary<string, object>
+                    {
+                        ["CaptureCardPresent"] = captureCardPresent,
+                        ["CaptureEvidence"] = captureEvidence ?? "None",
+                        ["HighNetworkOut"] = highNetworkOut
+                    }
+                );
+            }
+            else
+            {
+                AuditLogger.LogEvent("DualPcDetector", DetectionSeverity.Info, "OBS/Streaming software running (normal streamer)", $"Capture: {captureCardPresent}, Network: {highNetworkOut}");
+            }
+        }
+        else if (captureCardPresent)
+        {
+            AuditLogger.LogEvent("DualPcDetector", DetectionSeverity.Info, "Capture card present but no streaming software detected", captureEvidence ?? "");
+        }
+        else if (highNetworkOut)
+        {
+            AuditLogger.LogEvent("DualPcDetector", DetectionSeverity.Info, "High UDP stream detected without OBS or Capture Card");
         }
 
         return null;

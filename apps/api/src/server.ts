@@ -1,3 +1,4 @@
+import * as fs from 'fs';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
 import helmet from '@fastify/helmet';
@@ -24,24 +25,28 @@ import { healthRoutes } from './routes/v1/health';
 import wsRoutes from './routes/ws.routes';
 import { WebSocketService } from './services/websocket.service';
 
-const port = Number(process.env.PORT) || 4000;
+const port = Number(process.env.PORT) || 3001;
 const host = process.env.HOST || '0.0.0.0';
 
-const logger = pino({
-  level: process.env.LOG_LEVEL || 'info',
-  transport: {
-    target: 'pino-pretty',
-    options: {
-      colorize: true,
-      translateTime: 'SYS:standard',
-      ignore: 'pid,hostname',
-    },
-  },
-});
+const isProduction = process.env.NODE_ENV === 'production';
+const logger = isProduction
+  ? pino({ level: process.env.LOG_LEVEL || 'info' })
+  : pino({
+      level: process.env.LOG_LEVEL || 'info',
+      transport: {
+        target: 'pino-pretty',
+        options: {
+          colorize: true,
+          translateTime: 'SYS:standard',
+          ignore: 'pid,hostname',
+        },
+      },
+    });
 
 const app = fastify({
   logger: logger as any,
   disableRequestLogging: false,
+  trustProxy: true,
 });
 
 app.setErrorHandler(errorHandler);
@@ -73,6 +78,24 @@ export async function initApp() {
       error: 'Too Many Requests',
       message: 'Rate limit exceeded, please try again later.',
     }),
+    onExceeded: (request, key) => {
+      // #region agent log
+      try {
+        // fs is imported at module level
+        const line = JSON.stringify({
+          sessionId: '270d60',
+          runId: 'pre-fix',
+          hypothesisId: 'A',
+          location: 'server.ts:onExceeded',
+          message: 'rate_limit_exceeded',
+          data: { key, url: request.url, ip: request.ip },
+          timestamp: Date.now(),
+        });
+        fs.appendFileSync('debug-270d60.log', line + '\n');
+      } catch (_) {}
+      // #endregion
+      app.log.warn({ key, url: request.url }, 'Rate limit exceeded');
+    },
   });
 
   // 5. Auth Plugin (registers @fastify/jwt)

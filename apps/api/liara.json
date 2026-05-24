@@ -3,9 +3,14 @@
   "platform": "docker",
   "port": 3001,
   "build": {
-    "args": {}
+    "location": "iran",
+    "cache": false
   },
   "healthCheck": {
-    "command": "wget -qO- http://127.0.0.1:3001/health || exit 1"
+    "command": "node -e \"require('http').get('http://127.0.0.1:3001/health/live',(r)=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))\"",
+    "interval": 30,
+    "timeout": 15,
+    "retries": 5,
+    "startPeriod": 3000
   }
 }

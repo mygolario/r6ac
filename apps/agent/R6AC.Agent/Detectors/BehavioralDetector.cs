@@ -125,7 +125,8 @@ public class BehavioralDetector : IDetector
         }
 
         // 1. Analyze Click Intervals (Triggerbot)
-        if (clicks.Count >= 20)
+        const int MinSamplesRequired = 30;
+        if (clicks.Count >= MinSamplesRequired)
         {
             var intervals = new List<double>();
             for (int i = 0; i < clicks.Count - 1; i++)
@@ -137,10 +138,27 @@ public class BehavioralDetector : IDetector
             {
                 var avg = intervals.Average();
                 var sumOfSquaresOfDifferences = intervals.Select(val => (val - avg) * (val - avg)).Sum();
-                var stdDev = Math.Sqrt(sumOfSquaresOfDifferences / intervals.Count);
+                var stdDev = (float)Math.Sqrt(sumOfSquaresOfDifferences / intervals.Count);
 
-                if (stdDev < 5.0 && avg > 10)
+                DetectionSeverity? sev = stdDev switch
                 {
+                    > 20f => null,
+                    > 10f => DetectionSeverity.Info,
+                    > 5f => DetectionSeverity.Suspicious,
+                    > 2f => DetectionSeverity.Flag,
+                    _ => DetectionSeverity.Kick,
+                };
+
+                if (sev.HasValue)
+                {
+                    float conf = stdDev switch
+                    {
+                        > 10f => 0.10f,
+                        > 5f => 0.55f,
+                        > 2f => 0.80f,
+                        _ => 0.93f,
+                    };
+
                     var evidence = new Dictionary<string, object>
                     {
                         { "ClickCount", clicks.Count },
@@ -150,10 +168,11 @@ public class BehavioralDetector : IDetector
 
                     return new DetectionResult(
                         Type: DetectionType.TRIGGERBOT,
-                        Confidence: 0.88f,
+                         Severity: sev.Value,
+                        Confidence: conf,
                         ReasonCode: "INHUMAN_CLICK_REGULARITY",
-                        Description: $"Inhumanly consistent click interval detected (StdDev: {stdDev:F2}ms), potential triggerbot/macro.",
-                        DescriptionFA: $"نظم غیرانسانی در زمان‌بندی کلیک‌ها یافت شد (انحراف معیار: {stdDev:F2} میلی‌ثانیه)، احتمال استفاده از تریگربات.",
+                        Description: $"Consistent click interval detected (StdDev: {stdDev:F2}ms).",
+                        DescriptionFA: $"زمان‌بندی کلیک‌ها (انحراف معیار: {stdDev:F2} میلی‌ثانیه).",
                         Evidence: evidence
                     );
                 }
@@ -207,6 +226,7 @@ public class BehavioralDetector : IDetector
 
                 return new DetectionResult(
                     Type: DetectionType.AIMBOT,
+                         Severity: DetectionSeverity.Kick,
                     Confidence: 0.95f,
                     ReasonCode: "INHUMAN_MOUSE_VELOCITY",
                     Description: $"Inhuman mouse velocity detected ({maxSpeed:F0} px/s), potential aimbot flick.",
@@ -217,32 +237,49 @@ public class BehavioralDetector : IDetector
 
             if (totalCount >= 10)
             {
-                var ratio = (double)straightCount / totalCount;
-                if (ratio >= 0.40)
+                var ratio = (float)straightCount / totalCount;
+                DetectionSeverity severity = ClassifyStraightness(ratio);
+
+                float confidence = ratio switch
                 {
-                    float confidence = 0.60f;
-                    if (ratio >= 0.80) confidence = 0.93f;
-                    else if (ratio >= 0.60) confidence = 0.80f;
+                    < 0.55f => 0.00f,
+                    < 0.70f => 0.00f,
+                    < 0.82f => 0.55f,
+                    < 0.93f => 0.80f,
+                    _ => 0.95f
+                };
 
-                    var evidence = new Dictionary<string, object>
-                    {
-                        { "TotalMovementsChecked", totalCount },
-                        { "StraightLineMovements", straightCount },
-                        { "CollinearRatio", Math.Round(ratio, 3) }
-                    };
+                var evidence = new Dictionary<string, object>
+                {
+                    { "TotalMovementsChecked", totalCount },
+                    { "StraightLineMovements", straightCount },
+                    { "CollinearRatio", Math.Round(ratio, 3) }
+                };
 
-                    return new DetectionResult(
-                        Type: DetectionType.MACRO_TIMING,
-                        Confidence: confidence,
-                        ReasonCode: "EXCESSIVE_STRAIGHT_LINE_MOVEMENTS",
-                        Description: $"Excessive perfectly linear mouse movements detected ({(ratio * 100):F1}%), macro pattern.",
-                        DescriptionFA: $"حرکات ماوس کاملا خطی و غیرانسانی ثبت شد ({(ratio * 100):F1}٪)، نشانگر الگوی ماکرو.",
-                        Evidence: evidence
-                    );
-                }
+                return new DetectionResult(
+                    Type: DetectionType.MACRO_TIMING,
+                         Severity: severity,
+                    Confidence: confidence,
+                    ReasonCode: "STRAIGHT_LINE_MOVEMENTS",
+                    Description: $"Mouse movements analyzed ({(ratio * 100):F1}% linear).",
+                    DescriptionFA: $"حرکات ماوس ثبت شد ({(ratio * 100):F1}٪ خطی).",
+                    Evidence: evidence
+                );
             }
         }
 
         return null;
+    }
+
+    private DetectionSeverity ClassifyStraightness(float ratio)
+    {
+        return ratio switch
+        {
+            < 0.55f => DetectionSeverity.Info,        // Normal human aim
+            < 0.70f => DetectionSeverity.Info,        // Good aim, not suspicious
+            < 0.82f => DetectionSeverity.Suspicious,  // Unusually precise
+            < 0.93f => DetectionSeverity.Flag,        // Very likely assisted
+            _       => DetectionSeverity.Kick,        // Near-certain aimbot
+        };
     }
 }

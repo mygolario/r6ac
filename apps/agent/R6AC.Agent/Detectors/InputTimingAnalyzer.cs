@@ -134,6 +134,7 @@ public class InputTimingAnalyzer : IDetector, IDisposable
             {
                 return new DetectionResult(
                     Type: DetectionType.NO_RECOIL,
+                    Severity: DetectionSeverity.Kick,
                     Confidence: 0.90f,
                     ReasonCode: "NO_RECOIL_MACRO_COMPENSATION",
                     Description: $"No-recoil script detected: Inhuman perfectly consistent downward mouse pull (StdDev: {stdDevDy:F2} px).",
@@ -159,6 +160,7 @@ public class InputTimingAnalyzer : IDetector, IDisposable
             {
                 return new DetectionResult(
                     Type: DetectionType.TRIGGERBOT,
+                    Severity: DetectionSeverity.Kick,
                     Confidence: 0.93f,
                     ReasonCode: "TRIGGERBOT_REACTION_ANOMALY",
                     Description: $"Triggerbot reaction anomaly: 10+ consecutive shots with inhuman reaction times (Avg: {avgTime:F1}ms, StdDev: {stdDevTime:F2}ms).",
@@ -181,11 +183,12 @@ public class InputTimingAnalyzer : IDetector, IDisposable
             var avgInt = intervals.Average();
             var variance = intervals.Select(i => (i - avgInt) * (i - avgInt)).Sum() / intervals.Count;
 
-            if (variance < 2.0 && avgInt > 10.0)
+            if (variance < 0.5 && avgInt > 10.0)
             {
                 return new DetectionResult(
                     Type: DetectionType.MACRO_TIMING,
-                    Confidence: 0.85f,
+                    Severity: DetectionSeverity.Flag,
+                    Confidence: 0.84f,
                     ReasonCode: $"KEYBOARD_MACRO_VK_{group.Key}",
                     Description: $"Keyboard macro detected: Key repeat sequence with near-zero timing variance (Variance: {variance:F2}ms).",
                     DescriptionFA: $"ماکروی کیبورد شناسایی شد: تکرار دنباله کلیدها با واریانس زمانی نزدیک به صفر (واریانس: {variance:F2} میلی‌ثانیه).",

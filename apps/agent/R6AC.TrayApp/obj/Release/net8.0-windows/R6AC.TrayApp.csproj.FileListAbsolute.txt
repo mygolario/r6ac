@@ -28,3 +28,4 @@ C:\R6AC-Project\apps\agent\R6AC.TrayApp\obj\Release\net8.0-windows\refint\R6AC.T
 C:\R6AC-Project\apps\agent\R6AC.TrayApp\obj\Release\net8.0-windows\R6AC.TrayApp.pdb
 C:\R6AC-Project\apps\agent\R6AC.TrayApp\obj\Release\net8.0-windows\R6AC.TrayApp.genruntimeconfig.cache
 C:\R6AC-Project\apps\agent\R6AC.TrayApp\obj\Release\net8.0-windows\ref\R6AC.TrayApp.dll
+C:\R6AC-Project\apps\agent\R6AC.TrayApp\obj\Release\net8.0-windows\R6AC.TrayApp.sourcelink.json

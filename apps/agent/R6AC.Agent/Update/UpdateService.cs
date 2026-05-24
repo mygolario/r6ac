@@ -134,6 +134,7 @@ public class UpdateService
 
         var res = new DetectionResult(
             Type: DetectionType.TAMPER_DETECTED,
+            Severity: DetectionSeverity.Flag,
             Confidence: 1.0f,
             ReasonCode: "UPDATE_PACKAGE_TAMPERED",
             Description: "Downloaded update package failed cryptographic verification (tampering detected).",
@@ -147,7 +148,7 @@ public class UpdateService
             PlayerId: "SYSTEM_DEFENSE",
             MatchId: "NONE",
             DetectionType: res.Type.ToString(),
-            Confidence: res.Confidence,
+                        Confidence: res.Confidence,
             ReasonCode: res.ReasonCode,
             EvidenceJson: evidenceJson,
             RequiresHumanReview: false,

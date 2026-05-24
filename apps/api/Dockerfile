@@ -1,50 +1,36 @@
+# Monorepo context: deploy from repo root with
+#   liara deploy --path . --dockerfile apps/api/Dockerfile
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Set npm/pnpm registry to Liara's mirror FIRST (before any installs)
-RUN npm config set registry https://package-mirror.liara.ir/repository/npm/
+RUN npm config set registry https://package-mirror.liara.ir/repository/npm/ \
+  && npm install -g pnpm esbuild@0.28.0
 
-# Install pnpm
-RUN npm install -g pnpm
-RUN pnpm config set registry https://package-mirror.liara.ir/repository/npm/
-
-# Copy workspace manifest files
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-
-# Copy workspace packages source
-COPY packages/ ./packages/
-
-# Copy the API app
+COPY packages/config ./packages/config/
+COPY packages/types ./packages/types/
 COPY apps/api/ ./apps/api/
 
-# Install all dependencies
-RUN pnpm install --frozen-lockfile
+# Install only what the API needs (workspace + api package)
+RUN pnpm install --frozen-lockfile --filter @r6ac/api...
 
-# Build the API
-RUN pnpm --filter @r6ac/api build
+WORKDIR /app/apps/api
+RUN esbuild src/server.ts \
+  --bundle \
+  --platform=node \
+  --target=node20 \
+  --format=cjs \
+  --outfile=dist/server.cjs
 
-# ──────────────────────────────────────────────
+# ── Minimal runtime image (no node_modules, no pnpm symlinks) ──
 FROM node:20-alpine AS runner
 WORKDIR /app
 
-# Create non-root user (wget is already available in node:20-alpine)
-RUN addgroup -S r6ac && adduser -S r6ac -G r6ac
+ENV NODE_ENV=production
+ENV PORT=3001
+ENV HOST=0.0.0.0
 
-# Replicate workspace layout so symlinks resolve correctly
-COPY --from=builder /app/package.json ./package.json
-COPY --from=builder /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
-COPY --from=builder /app/packages ./packages
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
-COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
-COPY --from=builder /app/apps/api/dist ./apps/api/dist
+COPY --from=builder /app/apps/api/dist/server.cjs ./server.cjs
 
-WORKDIR /app/apps/api
-USER r6ac
 EXPOSE 3001
-
-# Use wget which is built into node:20-alpine — no apk needed
-HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
-  CMD wget -qO- http://127.0.0.1:3001/health || exit 1
-
-CMD ["npx", "tsx", "dist/index.js"]
+CMD ["node", "server.cjs"]

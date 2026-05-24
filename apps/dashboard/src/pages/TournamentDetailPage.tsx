@@ -30,21 +30,20 @@ export const TournamentDetailPage = () => {
   const [reportTypeFilter, setReportTypeFilter] = useState<string>('ALL');
 
   // API Hooks
-  const { data: tournamentDetail } = useTournament(id || '');
+  const { data: tournamentDetail, isLoading } = useTournament(id || '');
   const { data: reportsData } = useReports({ page: 1, limit: 100 });
   const { data: playersData } = usePlayers({ page: 1, limit: 100 });
   const { data: bracketMatchesData } = useBracket(id || '');
 
-  const tournament = tournamentDetail?.tournament || {
-    id: id || 'tour_1',
-    name: 'R6AC Premier League 2026',
-    nameFA: 'لیگ برتر رینبو سیکس ایران',
-    status: 'active',
-    maxTeams: 16,
-    prizePool: 50000000,
-    currency: 'IRR',
-    startDate: new Date().toISOString(),
-  };
+  if (isLoading || !tournamentDetail) {
+    return (
+      <div className="flex justify-center items-center h-64 w-full">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+      </div>
+    );
+  }
+
+  const tournament = tournamentDetail?.data || tournamentDetail?.tournament || tournamentDetail;
 
   const playersList = playersData?.players || [];
   const reportsList = reportsData?.reports || [];
@@ -330,14 +329,14 @@ export const TournamentDetailPage = () => {
                 <h3 className="text-lg font-bold font-vazir">{isRtl ? 'تیم‌های ثبت‌نام شده' : 'Registered Teams'}</h3>
                 <span className="text-xs text-text-secondary font-mono font-mono">
                   {isRtl 
-                    ? `تعداد کل: ${(tournamentDetail?.registeredTeamsCount || 0).toLocaleString('fa-IR')} تیم` 
-                    : `Total: ${tournamentDetail?.registeredTeamsCount || 0} teams`}
+                    ? `تعداد کل: ${(tournament.registeredTeamsCount || 0).toLocaleString('fa-IR')} تیم` 
+                    : `Total: ${tournament.registeredTeamsCount || 0} teams`}
                 </span>
               </div>
 
               <div className="grid grid-cols-1 gap-4 font-vazir">
-                {(tournamentDetail?.registeredTeamsList || []).length > 0 ? (
-                  (tournamentDetail.registeredTeamsList).map((team: any) => {
+                {(tournament.registeredTeamsList || []).length > 0 ? (
+                  (tournament.registeredTeamsList).map((team: any) => {
                     const isExpanded = expandedTeamId === team.id;
                     const teamPlayers = playersList.filter((p: any) => p.teamId === team.id);
                     const captain = teamPlayers.find((p: any) => p.role === 'team_captain') || teamPlayers[0];

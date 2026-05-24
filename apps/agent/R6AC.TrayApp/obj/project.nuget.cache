@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "rLePxdRn9qY=",
+  "dgSpecHash": "/2B3MiCxkTY=",
   "success": true,
   "projectFilePath": "C:\\R6AC-Project\\apps\\agent\\R6AC.TrayApp\\R6AC.TrayApp.csproj",
   "expectedPackageFiles": [
@@ -17,8 +17,7 @@
     "C:\\Users\\Ario\\.nuget\\packages\\system.management\\8.0.0\\system.management.8.0.0.nupkg.sha512",
     "C:\\Users\\Ario\\.nuget\\packages\\system.security.accesscontrol\\5.0.0\\system.security.accesscontrol.5.0.0.nupkg.sha512",
     "C:\\Users\\Ario\\.nuget\\packages\\system.security.principal.windows\\5.0.0\\system.security.principal.windows.5.0.0.nupkg.sha512",
-    "C:\\Users\\Ario\\.nuget\\packages\\system.text.encodings.web\\8.0.0\\system.text.encodings.web.8.0.0.nupkg.sha512",
-    "C:\\Users\\Ario\\.nuget\\packages\\system.text.json\\8.0.0\\system.text.json.8.0.0.nupkg.sha512"
+    "C:\\Users\\Ario\\.nuget\\packages\\system.text.json\\8.0.5\\system.text.json.8.0.5.nupkg.sha512"
   ],
   "logs": []
 }

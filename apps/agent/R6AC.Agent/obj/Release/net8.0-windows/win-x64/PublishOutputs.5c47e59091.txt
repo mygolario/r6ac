@@ -1,0 +1,3 @@
+C:\R6AC-Project\apps\agent\R6AC.Agent\bin\Release\net8.0-windows\win-x64\publish\R6AC.Agent.pdb
+C:\R6AC-Project\apps\agent\R6AC.Agent\bin\Release\net8.0-windows\win-x64\publish\agent-config.json
+C:\R6AC-Project\apps\agent\R6AC.Agent\bin\Release\net8.0-windows\win-x64\publish\R6AC.Agent.exe

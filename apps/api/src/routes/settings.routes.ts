@@ -28,7 +28,7 @@ let antiCheatSettings = {
 const updatePlatformSchema = z.object({
   platformName: z.string().min(1).max(100).optional(),
   defaultLanguage: z.enum(['fa', 'en']).optional(),
-  logoUrl: z.string().url().nullable().optional(),
+  logoUrl: z.string().nullable().optional(),
 });
 
 const updateTournamentSchema = z.object({

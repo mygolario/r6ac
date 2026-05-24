@@ -76,6 +76,11 @@ export const DashboardPage = () => {
   ).length;
   const registeredTeamsCount = new Set(playersList.map((p: any) => p.teamId).filter(Boolean)).size;
 
+  const tournamentsInRegistration = tournamentsList.filter((t: any) => t.status === 'registration').length;
+  const confirmedBansCount = reportsList.filter((r: any) => r.autoAction === 'kick').length;
+  const yesterdayActiveCount = playersList.filter((p: any) => p.banStatus !== 'banned' && new Date(p.createdAt).getTime() < Date.now() - 86400000).length;
+  const playersGrowth = yesterdayActiveCount === 0 ? (activePlayersCount > 0 ? 100 : 0) : Math.round(((activePlayersCount - yesterdayActiveCount) / yesterdayActiveCount) * 100);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
@@ -114,7 +119,7 @@ export const DashboardPage = () => {
               </div>
               <p className="text-xs text-success flex items-center gap-1 mt-1 font-vazir">
                 <TrendingUp className="w-3.5 h-3.5" />
-                <span>{isRtl ? '۱۲٪+ نسبت به دیروز' : '+12% vs yesterday'}</span>
+                <span>{isRtl ? `${playersGrowth > 0 ? '+' : ''}${playersGrowth.toLocaleString('fa-IR')}٪ نسبت به دیروز` : `${playersGrowth > 0 ? '+' : ''}${playersGrowth}% vs yesterday`}</span>
               </p>
             </CardContent>
           </Card>
@@ -134,7 +139,7 @@ export const DashboardPage = () => {
                 <AnimatedCounter value={activeTournamentsCount} isRtl={isRtl} />
               </div>
               <p className="text-xs text-text-secondary flex items-center gap-1 mt-1 font-vazir">
-                <span>{isRtl ? '۲ در حال ثبت‌نام' : '2 in registration'}</span>
+                <span>{isRtl ? `${tournamentsInRegistration.toLocaleString('fa-IR')} در حال ثبت‌نام` : `${tournamentsInRegistration} in registration`}</span>
               </p>
             </CardContent>
           </Card>
@@ -162,7 +167,7 @@ export const DashboardPage = () => {
                 <AnimatedCounter value={todayReportsCount} isRtl={isRtl} />
               </div>
               <p className="text-xs text-text-secondary flex items-center gap-1 mt-1 font-vazir">
-                <span>{isRtl ? '۴ گزارش تأیید شده' : '4 confirmed bans'}</span>
+                <span>{isRtl ? `${confirmedBansCount.toLocaleString('fa-IR')} گزارش تأیید شده` : `${confirmedBansCount} confirmed bans`}</span>
               </p>
             </CardContent>
           </Card>
@@ -182,7 +187,7 @@ export const DashboardPage = () => {
                 <AnimatedCounter value={registeredTeamsCount} isRtl={isRtl} />
               </div>
               <p className="text-xs text-text-secondary flex items-center gap-1 mt-1 font-vazir">
-                <span>{isRtl ? '۸ تیم در لیگ برتر' : '8 teams in Premier league'}</span>
+                <span>{isRtl ? `${registeredTeamsCount.toLocaleString('fa-IR')} تیم در لیگ برتر` : `${registeredTeamsCount} teams in Premier league`}</span>
               </p>
             </CardContent>
           </Card>

@@ -29,17 +29,34 @@ public enum DetectionType
     VM_ENVIRONMENT
 }
 
+public enum DetectionSeverity
+{
+    /// Seen but clearly not a threat — log only, no report
+    Info = 0,
+
+    /// Unusual but explainable — monitor, accumulate evidence
+    Suspicious = 1,
+
+    /// High confidence — generate report, require human review
+    Flag = 2,
+
+    /// Near-certain — generate report, recommend auto-kick
+    Kick = 3,
+}
+
 /// <summary>
 /// نتیجه اسکن یک ماژول تشخیص در صورت یافتن تقلب یا ناهنجاری.
 /// Result of a detection scan when cheating or anomaly is found.
 /// </summary>
 public record DetectionResult(
     DetectionType Type,
+    DetectionSeverity Severity,
     float Confidence,
     string ReasonCode,
     string Description,
     string DescriptionFA,
-    Dictionary<string, object> Evidence
+    Dictionary<string, object> Evidence,
+    bool IsFalsePositiveRisk = false
 );
 
 /// <summary>

@@ -53,6 +53,7 @@ export const MainLayout = () => {
             logout();
             navigate('/login');
           }}
+          onNotificationsClick={() => navigate('/reports')}
         />
         <main className="flex-1 overflow-y-auto p-6">
           <Outlet />

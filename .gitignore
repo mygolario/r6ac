@@ -16,3 +16,7 @@ yarn-error.log*
 .env*.local
 .vercel
 .turbo
+
+# Generated during `pnpm deploy:api` / `pnpm deploy:dashboard`
+/liara.json
+/deploy/

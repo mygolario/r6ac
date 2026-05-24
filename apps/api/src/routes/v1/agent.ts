@@ -1,7 +1,63 @@
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 import { FastifyInstance } from 'fastify';
+import { z } from 'zod';
+import { AuthRepository } from '../../repositories/auth.repository';
+import { PlayerService } from '../../services/player.service';
+
+const agentAuthSchema = z.object({
+  username: z.string(),
+  password: z.string(),
+  hwid: z.string().min(1),
+});
 
 export async function agentRoutes(fastify: FastifyInstance): Promise<void> {
+  fastify.post('/auth', async (request, reply) => {
+    const data = agentAuthSchema.parse(request.body);
+    
+    let user: any;
+    try {
+      user = await AuthRepository.findUserByUsernameOrEmail(data.username);
+    } catch (err) {
+      return reply.status(401).send({ error: 'Invalid credentials or database offline.' });
+    }
+
+    if (!user) {
+      return reply.status(401).send({ error: 'Invalid credentials.' });
+    }
+
+    if (user.banStatus === 'banned') {
+      return reply.status(403).send({ error: 'Account banned.' });
+    }
+
+    const isValid = await bcrypt.compare(data.password, user.passwordHash);
+    if (!isValid) {
+      return reply.status(401).send({ error: 'Invalid credentials.' });
+    }
+
+    if (!user.hwid) {
+      // First time login, bind HWID
+      await PlayerService.updateHwid(user.id, data.hwid);
+    } else if (user.hwid !== data.hwid) {
+      return reply.status(403).send({ error: 'HWID mismatch. Contact administrator to reset HWID.' });
+    }
+
+    const payload = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      hwid: data.hwid,
+    };
+
+    const token = fastify.jwt.sign(payload, { expiresIn: '4h' });
+
+    return reply.status(200).send({
+      success: true,
+      token,
+      playerId: user.id,
+    });
+  });
+
   fastify.get('/latest-version', {
     schema: {
       response: {
@@ -42,3 +98,4 @@ export async function agentRoutes(fastify: FastifyInstance): Promise<void> {
     });
   });
 }
+

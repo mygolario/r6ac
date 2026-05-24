@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 using R6AC.Agent.Core;
 
 namespace R6AC.Agent.Detectors;
@@ -16,6 +17,18 @@ public class WindowDetector : IDetector
     private static readonly List<string> SuspiciousKeywords = new()
     {
         "esp", "aimbot", "hack", "cheat", "overlay", "radar", "chams", "wallhack"
+    };
+
+    private static readonly List<string> WhitelistedApps = new()
+    {
+        "discord", "obs", "explorer", "browser", "r6ac", "taskmgr", "devenv", "rider", "code",
+        "softether", "electro", "bazitory", "shecan", "cmd", "rainbow six", "vulkan",
+        "steam", "nvidia", "geforce", "amd", "radeon", "overwolf", "epic", "uplay", "ubisoft",
+        "nordvpn", "expressvpn", "cyberghost", "protonvpn", "surfshark", "windscribe", 
+        "mullvad", "exitlag", "wtfast", "mudfish", "pingzapper", "noping", "hidemyass", 
+        "tunnelbear", "private internet access", "vyprvpn", "ipvanish", "hotspot shield", 
+        "cloudflare", "warp", "outline", "v2ray", "shadowsocks", "clash", "nekoray", 
+        "netch", "v2rayn", "openconnect", "anyconnect"
     };
 
     private delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
@@ -72,9 +85,11 @@ public class WindowDetector : IDetector
                 var exStyle = GetWindowLong(hWnd, GWL_EXSTYLE);
 
                 // 1. Check Keywords
+                bool isWhitelisted = WhitelistedApps.Any(app => title.Contains(app));
+                
                 foreach (var kw in SuspiciousKeywords)
                 {
-                    if (!string.IsNullOrWhiteSpace(title) && title.Contains(kw) && !title.Contains("r6ac") && !title.Contains("browser"))
+                    if (!string.IsNullOrWhiteSpace(title) && Regex.IsMatch(title, $@"\b{kw}\b", RegexOptions.IgnoreCase) && !isWhitelisted)
                     {
                         var evidence = new Dictionary<string, object>
                         {
@@ -85,6 +100,7 @@ public class WindowDetector : IDetector
 
                         detectedResult = new DetectionResult(
                             Type: DetectionType.WALLHACK,
+                            Severity: DetectionSeverity.Kick,
                             Confidence: 0.90f,
                             ReasonCode: "FORBIDDEN_WINDOW_TITLE",
                             Description: $"Suspicious window title detected: {sb}",
@@ -113,6 +129,7 @@ public class WindowDetector : IDetector
 
                         detectedResult = new DetectionResult(
                             Type: DetectionType.WALLHACK,
+                            Severity: DetectionSeverity.Kick,
                             Confidence: 0.85f,
                             ReasonCode: "TRANSPARENT_SCREEN_OVERLAY",
                             Description: "Full-screen transparent layered overlay window detected, potential ESP/Wallhack.",
@@ -137,7 +154,8 @@ public class WindowDetector : IDetector
 
                         detectedResult = new DetectionResult(
                             Type: DetectionType.WALLHACK,
-                            Confidence: 0.75f,
+                            Severity: DetectionSeverity.Flag,
+                            Confidence: 0.40f,
                             ReasonCode: "ZERO_DIMENSION_LAYERED_WINDOW",
                             Description: $"Hidden overlay window with zero dimensions detected: {sb}",
                             DescriptionFA: $"پنجره اورلی مخفی با ابعاد صفر یافت شد: {sb}",

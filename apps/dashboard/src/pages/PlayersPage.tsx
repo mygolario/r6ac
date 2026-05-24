@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Search, Plus, X, AlertTriangle, ShieldAlert, Ban, Info, Eye, ShieldCheck, History } from 'lucide-react';
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { usePlayers, useUpdateBanStatus, usePlayer, useReports } from '../hooks/useApi';
+import { usePlayers, useUpdateBanStatus, usePlayer, useReports, useResetHwid } from '../hooks/useApi';
+import { useAuthStore } from '../stores/auth-store';
 
 // Custom Drawer Component
 const Drawer = ({
@@ -168,9 +169,10 @@ const rowVariants = {
 export const PlayersPage = () => {
   const { t, i18n } = useTranslation(['dashboard', 'common']);
   const isRtl = i18n.language === 'fa';
+  const { user } = useAuthStore();
 
   const [search, setSearch] = useState('');
-  const [filter, setFilter] = useState<'all' | 'clean' | 'flagged' | 'banned'>('all');
+  const [filter, setFilter] = useState<'all' | 'clean' | 'flagged' | 'banned' | 'live'>('all');
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -180,12 +182,20 @@ export const PlayersPage = () => {
     page: 1,
     limit: 100,
     search: search || undefined,
-    banStatus: filter === 'all' ? undefined : filter,
+    banStatus: filter === 'all' || filter === 'live' ? undefined : filter as any,
   });
-  const { data: reportsData } = useReports({ page: 1, limit: 1000 });
+  const { data: reportsData } = useReports({ page: 1, limit: 100 });
   const updateBanMutation = useUpdateBanStatus();
+  const resetHwidMutation = useResetHwid();
 
-  const filteredPlayers = playersData?.players || [];
+  let filteredPlayers = [...(playersData?.players || [])];
+  if (filter === 'live') {
+    filteredPlayers = filteredPlayers.filter((p: any) => p.isLive);
+  }
+  filteredPlayers.sort((a: any, b: any) => {
+    if (a.isLive === b.isLive) return 0;
+    return a.isLive ? -1 : 1;
+  });
   const totalCount = playersData?.total || filteredPlayers.length;
   const reportsList = reportsData?.reports || [];
 
@@ -215,6 +225,12 @@ export const PlayersPage = () => {
       if (selectedPlayer && selectedPlayer.id === playerId) {
         setSelectedPlayer((prev) => (prev ? { ...prev, banStatus: action } : null));
       }
+    } catch (err) {}
+  };
+
+  const handleResetHwid = async (playerId: string) => {
+    try {
+      await resetHwidMutation.mutateAsync(playerId);
     } catch (err) {}
   };
 
@@ -258,7 +274,7 @@ export const PlayersPage = () => {
           </div>
 
           <div className="flex flex-wrap items-center gap-2 w-full md:w-auto font-vazir">
-            {(['all', 'clean', 'flagged', 'banned'] as const).map((opt) => (
+            {(['all', 'live', 'clean', 'flagged', 'banned'] as const).map((opt) => (
               <button
                 key={opt}
                 onClick={() => setFilter(opt)}
@@ -268,7 +284,7 @@ export const PlayersPage = () => {
                     : 'bg-surface-2 border-border text-text-secondary hover:text-text-primary'
                 }`}
               >
-                {t(`players.filter${opt.charAt(0).toUpperCase() + opt.slice(1)}`)}
+                {opt === 'live' ? (isRtl ? 'زنده' : 'Live') : t(`players.filter${opt.charAt(0).toUpperCase() + opt.slice(1)}`)}
               </button>
             ))}
           </div>
@@ -313,9 +329,17 @@ export const PlayersPage = () => {
                             status={player.banStatus}
                           />
                           <div>
-                            <span className="font-semibold block text-text-primary font-vazir">
-                              {isRtl && player.usernameFA ? player.usernameFA : player.username}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold block text-text-primary font-vazir">
+                                {isRtl && player.usernameFA ? player.usernameFA : player.username}
+                              </span>
+                              {player.isLive && (
+                                <span className="relative flex h-2 w-2" title={isRtl ? 'در حال بازی' : 'Live In Match'}>
+                                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+                                  <span className="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
+                                </span>
+                              )}
+                            </div>
                             <span className="text-xs text-text-secondary font-mono">{player.email}</span>
                           </div>
                         </div>
@@ -356,7 +380,7 @@ export const PlayersPage = () => {
                           >
                             <Eye className="w-3.5 h-3.5" />
                           </Button>
-                          {player.banStatus !== 'banned' && (
+                          {player.banStatus !== 'banned' && player.id !== user?.id && (
                             <Button
                               variant="danger"
                               size="sm"
@@ -397,9 +421,20 @@ export const PlayersPage = () => {
                 className="ring-4 ring-border font-mono"
               />
               <div className="flex-1 font-vazir">
-                <h4 className="text-xl font-bold text-text-primary leading-tight font-vazir">
-                  {isRtl && selectedPlayer.usernameFA ? selectedPlayer.usernameFA : selectedPlayer.username}
-                </h4>
+                <div className="flex items-center gap-3">
+                  <h4 className="text-xl font-bold text-text-primary leading-tight font-vazir">
+                    {isRtl && selectedPlayer.usernameFA ? selectedPlayer.usernameFA : selectedPlayer.username}
+                  </h4>
+                  {selectedPlayer.isLive && (
+                    <Badge variant="neutral" className="border-success/30 bg-success/10 text-success flex items-center gap-1.5 px-2 py-0.5">
+                      <span className="relative flex h-1.5 w-1.5">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-success"></span>
+                      </span>
+                      {isRtl ? 'در حال بازی' : 'LIVE'}
+                    </Badge>
+                  )}
+                </div>
                 <p className="text-xs text-text-secondary mt-1 font-mono">{selectedPlayer.email}</p>
                 <div className="flex items-center gap-2 mt-2 font-vazir">
                   <Badge variant={selectedPlayer.banStatus}>
@@ -424,6 +459,25 @@ export const PlayersPage = () => {
                     ? `••••••••${playerDetail.hardwareFingerprintHash.substring(playerDetail.hardwareFingerprintHash.length - 8).toUpperCase()}` 
                     : (isRtl ? 'بدون اثر انگشت سخت‌افزاری' : 'No HW Fingerprint')}
                 </span>
+              </div>
+              <div className="bg-surface-2 p-3 mt-2 rounded-lg border border-border flex items-center justify-between font-mono text-sm">
+                <span className="text-text-secondary">HWID Linked</span>
+                <div className="flex items-center gap-2">
+                  <span className={`font-bold ${playerDetail?.hwid ? 'text-success' : 'text-text-muted'}`}>
+                    {playerDetail?.hwid ? 'YES' : 'NO'}
+                  </span>
+                  {playerDetail?.hwid && (
+                    <Button 
+                      variant="danger" 
+                      size="sm" 
+                      onClick={() => handleResetHwid(selectedPlayer.id)}
+                      disabled={resetHwidMutation.isPending}
+                      className="h-6 px-2 text-[10px]"
+                    >
+                      Reset HWID
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
 

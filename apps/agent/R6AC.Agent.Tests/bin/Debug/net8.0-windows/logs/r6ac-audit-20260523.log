@@ -1,0 +1,11 @@
+[AUDIT] 00:29:57 | DualPcDetector | Severity: Info | Reason: Capture card present but no streaming software detected | USB VID: 0FD9
+[AUDIT] 00:30:33 | DualPcDetector | Severity: Info | Reason: Capture card present but no streaming software detected | USB VID: 0FD9
+[AUDIT] 00:30:45 | DualPcDetector | Severity: Info | Reason: Capture card present but no streaming software detected | USB VID: 0FD9
+[AUDIT] 10:34:35 | DualPcDetector | Severity: Info | Reason: Capture card present but no streaming software detected | USB VID: 0FD9
+[AUDIT] 10:40:37 | DualPcDetector | Severity: Info | Reason: Capture card present but no streaming software detected | USB VID: 0FD9
+[AUDIT] 10:41:05 | DualPcDetector | Severity: Info | Reason: Capture card present but no streaming software detected | USB VID: 0FD9
+[AUDIT] 10:41:39 | DualPcDetector | Severity: Info | Reason: Capture card present but no streaming software detected | USB VID: 0FD9
+[AUDIT] 10:45:48 | AdvancedUsbDetector | Severity: Info | Reason: Arduino connected (alone/dev) | VID:0x2341 PID:0x0043 Manufacturer:Arduino SerialNumber:12345
+[AUDIT] 10:45:48 | AdvancedUsbDetector | Severity: Info | Reason: Arduino connected (alone/dev) | VID:0x2341 PID:0x0043 Manufacturer:Arduino SerialNumber:12345
+[AUDIT] 10:45:48 | DualPcDetector | Severity: Info | Reason: Capture card present but no streaming software detected | USB VID: 0FD9
+[AUDIT] 10:46:19 | DualPcDetector | Severity: Info | Reason: Capture card present but no streaming software detected | USB VID: 0FD9

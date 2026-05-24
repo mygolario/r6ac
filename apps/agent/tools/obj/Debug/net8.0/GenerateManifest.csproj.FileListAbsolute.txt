@@ -1,0 +1,15 @@
+C:\R6AC-Project\apps\agent\tools\bin\Debug\net8.0\GenerateManifest.exe
+C:\R6AC-Project\apps\agent\tools\bin\Debug\net8.0\GenerateManifest.deps.json
+C:\R6AC-Project\apps\agent\tools\bin\Debug\net8.0\GenerateManifest.runtimeconfig.json
+C:\R6AC-Project\apps\agent\tools\bin\Debug\net8.0\GenerateManifest.dll
+C:\R6AC-Project\apps\agent\tools\bin\Debug\net8.0\GenerateManifest.pdb
+C:\R6AC-Project\apps\agent\tools\obj\Debug\net8.0\GenerateManifest.GeneratedMSBuildEditorConfig.editorconfig
+C:\R6AC-Project\apps\agent\tools\obj\Debug\net8.0\GenerateManifest.AssemblyInfoInputs.cache
+C:\R6AC-Project\apps\agent\tools\obj\Debug\net8.0\GenerateManifest.AssemblyInfo.cs
+C:\R6AC-Project\apps\agent\tools\obj\Debug\net8.0\GenerateManifest.csproj.CoreCompileInputs.cache
+C:\R6AC-Project\apps\agent\tools\obj\Debug\net8.0\GenerateManifest.sourcelink.json
+C:\R6AC-Project\apps\agent\tools\obj\Debug\net8.0\GenerateManifest.dll
+C:\R6AC-Project\apps\agent\tools\obj\Debug\net8.0\refint\GenerateManifest.dll
+C:\R6AC-Project\apps\agent\tools\obj\Debug\net8.0\GenerateManifest.pdb
+C:\R6AC-Project\apps\agent\tools\obj\Debug\net8.0\GenerateManifest.genruntimeconfig.cache
+C:\R6AC-Project\apps\agent\tools\obj\Debug\net8.0\ref\GenerateManifest.dll

@@ -1,7 +1,7 @@
 import { DetectionType } from '@r6ac/types';
 import { Card, CardContent, CardHeader, CardTitle, Badge, Button } from '@r6ac/ui';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Users, Image, Sliders, Check, Plus, Trash2, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { Shield, Users, Image, Sliders, Check, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -586,18 +586,18 @@ export const SettingsPage = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 space-y-3">
-                {adminsList.map((adm) => (
+                {adminsList.map((adm: any) => (
                   <div
                     key={adm.id}
                     className="flex items-center justify-between p-3 rounded-lg border border-border bg-surface-2/40 text-xs hover:border-accent/20 transition-all duration-200"
                   >
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center font-bold text-accent">
-                        {adm.name.substring(0, 1).toUpperCase()}
+                        {(isRtl && adm.usernameFA ? adm.usernameFA : adm.username).substring(0, 1).toUpperCase()}
                       </div>
                       <div>
                         <span className="font-bold text-text-primary block font-vazir leading-tight">
-                          {adm.name}
+                          {isRtl && adm.usernameFA ? adm.usernameFA : adm.username}
                         </span>
                         <span className="text-[10px] text-text-secondary font-mono">@{adm.username}</span>
                       </div>

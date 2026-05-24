@@ -28,8 +28,15 @@ public class UsbDeviceScanner
         new("Arduino Uno", "VID_2341&PID_0043", 0.65f, "ARDUINO_INPUT_DEVICE"),
         new("Arduino Leonardo", "VID_2341&PID_8036", 0.70f, "ARDUINO_HID_DEVICE"),
         new("Arduino Micro", "VID_2341&PID_8037", 0.70f, "ARDUINO_HID_DEVICE"),
-        new("Raspberry Pi", "VID_2E8A", 0.60f, "RASPBERRY_PI_DEVICE"),
-        new("Unknown HID Composite", "VID_1532", 0.50f, "SUSPICIOUS_HID_DEVICE"),
+        new("Raspberry Pi", "VID_2E8A", 0.60f, "RASPBERRY_PI_DEVICE")
+    };
+
+    private static readonly List<string> WhitelistedVids = new()
+    {
+        "VID_046D", // Logitech
+        "VID_1B1C", // Corsair
+        "VID_1532", // Razer
+        "VID_1038"  // SteelSeries
     };
 
     /// <summary>
@@ -75,7 +82,10 @@ public class UsbDeviceScanner
         foreach (var dev in devices)
         {
             var idUpper = dev.DeviceId.ToUpperInvariant();
-            if (idUpper.Contains("HID"))
+            
+            bool isWhitelisted = WhitelistedVids.Any(vid => idUpper.Contains(vid));
+
+            if (idUpper.Contains("HID") && !isWhitelisted)
             {
                 hidCount++;
             }
@@ -93,6 +103,7 @@ public class UsbDeviceScanner
 
                     return new DetectionResult(
                         Type: DetectionType.SUSPICIOUS_HARDWARE,
+                        Severity: DetectionSeverity.Kick,
                         Confidence: sig.Confidence,
                         ReasonCode: sig.ReasonCode,
                         Description: $"Suspicious USB hardware detected: {sig.Name} ({dev.Name})",
@@ -101,24 +112,6 @@ public class UsbDeviceScanner
                     );
                 }
             }
-        }
-
-        if (hidCount > 2)
-        {
-            var evidence = new Dictionary<string, object>
-            {
-                { "TotalHidDevices", hidCount },
-                { "DeviceList", devices.Select(d => d.Name).ToList() }
-            };
-
-            return new DetectionResult(
-                Type: DetectionType.MACRO_TIMING,
-                Confidence: 0.60f,
-                ReasonCode: "MULTIPLE_HID_INJECTION_DEVICES",
-                Description: $"Excessive HID input devices detected ({hidCount} devices), potential macro injection setup.",
-                DescriptionFA: $"تعداد غیرعادی دستگاه‌های ورودی HID متصل است ({hidCount} دستگاه)، احتمال استفاده از سخت‌افزار ماکرو.",
-                Evidence: evidence
-            );
         }
 
         return null;

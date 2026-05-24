@@ -193,6 +193,7 @@ public class AgentService
                 var evidence = new Dictionary<string, object> { ["HookedMethod"] = hookedMethod };
                 var dRes = new DetectionResult(
                     Type: DetectionType.TAMPER_DETECTED,
+                    Severity: DetectionSeverity.Kick,
                     Confidence: 1.0f,
                     ReasonCode: "METHOD_PROLOGUE_HOOKED_" + hookedMethod.Replace(".", "_").ToUpperInvariant(),
                     Description: $"Runtime method hook detected on {hookedMethod}.",
@@ -206,7 +207,7 @@ public class AgentService
                     PlayerId: _session.PlayerId,
                     MatchId: _session.MatchId,
                     DetectionType: dRes.Type.ToString(),
-                    Confidence: dRes.Confidence,
+                        Confidence: dRes.Confidence,
                     ReasonCode: dRes.ReasonCode,
                     EvidenceJson: evidenceJson,
                     RequiresHumanReview: false,
@@ -243,7 +244,7 @@ public class AgentService
                             PlayerId: _session.PlayerId,
                             MatchId: _session.MatchId,
                             DetectionType: "KERNEL_" + kRep.DetectionType.ToString().ToUpper(),
-                            Confidence: kRep.Confidence,
+                        Confidence: kRep.Confidence,
                             ReasonCode: kRep.ReasonCode,
                             EvidenceJson: evidenceJson,
                             RequiresHumanReview: kRep.Confidence < 0.95f,
@@ -260,6 +261,7 @@ public class AgentService
                             CurrentState = "ALERT";
                             var dRes = new DetectionResult(
                                 DetectionType.GAME_TAMPERING,
+                                DetectionSeverity.Kick,
                                 kRep.Confidence,
                                 kRep.ReasonCode,
                                 "Kernel Driver Protected Memory Anomaly Detected",
@@ -310,7 +312,7 @@ public class AgentService
                             PlayerId: _session.PlayerId,
                             MatchId: _session.MatchId,
                             DetectionType: result.Type.ToString(),
-                            Confidence: result.Confidence,
+                        Confidence: result.Confidence,
                             ReasonCode: result.ReasonCode,
                             EvidenceJson: evidenceJson,
                             RequiresHumanReview: requiresReview,
@@ -376,7 +378,7 @@ public class AgentService
                     PlayerId: _session.PlayerId,
                     MatchId: _session.MatchId,
                     DetectionType: "SESSION_ANOMALY",
-                    Confidence: verdict.FinalScore,
+                        Confidence: verdict.FinalScore,
                     ReasonCode: "BEHAVIORAL_ML_VERDICT_" + verdict.Verdict,
                     EvidenceJson: evidenceJson,
                     RequiresHumanReview: verdict.Verdict != VerdictLevel.KICKED,
@@ -392,6 +394,7 @@ public class AgentService
                     CurrentState = "ALERT";
                     var dRes = new DetectionResult(
                         DetectionType.SESSION_ANOMALY,
+                        DetectionSeverity.Kick,
                         verdict.FinalScore,
                         "BEHAVIORAL_ML_VERDICT_KICKED",
                         "Behavioral ML Engine triggered automatic match kick.",

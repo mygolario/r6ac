@@ -1,9 +1,9 @@
 {
   "version": "1.0.0",
-  "apiBaseUrl": "https://api.r6ac.ir",
+  "apiBaseUrl": "https://r6ac-api.liara.run",
   "scanIntervalSeconds": 5,
-  "reportSyncIntervalSeconds": 30,
-  "offlineMode": true,
+  "reportSyncIntervalSeconds": 10,
+  "offlineMode": false,
   "language": "fa",
   "detection": {
     "processDetection": true,
@@ -24,5 +24,24 @@
   },
   "electroLan": {
     "whitelistedAdapterPrefixes": ["ElectroLAN", "TAP-Windows"]
+  },
+  "behavioral": {
+    "sessionAnalysisIntervalMinutes": 5,
+    "mouseBufferSizeSeconds": 30,
+    "noRecoilStdDevThresholdClean": 5.0,
+    "noRecoilStdDevThresholdCheat": 2.0,
+    "triggerbotMaxStdDevMs": 5.0,
+    "triggerbotMinSamples": 10,
+    "macroIntervalVarianceMs": 2.0,
+    "weights": {
+      "aimSnapFrequency": 0.15,
+      "trackingSmoothness": 0.15,
+      "clickReactionTimeMs": 0.10,
+      "clickReactionStdDev": 0.12,
+      "noRecoilScore": 0.12,
+      "macroConsistencyScore": 0.08,
+      "hardwareAnomalyScore": 0.18,
+      "dmaIndicatorPresent": 0.10
+    }
   }
 }

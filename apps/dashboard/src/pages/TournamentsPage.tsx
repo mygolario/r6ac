@@ -62,7 +62,7 @@ export const TournamentsPage = () => {
           </p>
         </div>
 
-        <Button variant="primary" className="font-vazir flex items-center gap-1.5 font-vazir">
+        <Button variant="primary" className="font-vazir flex items-center gap-1.5 font-vazir" onClick={() => navigate('/tournaments/new')}>
           <Plus className="w-4 h-4" />
           {t('tournaments.createButton')}
         </Button>

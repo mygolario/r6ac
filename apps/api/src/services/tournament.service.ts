@@ -24,6 +24,11 @@ export class TournamentService {
     },
     createdBy: string
   ) {
+    const existing = await TournamentRepository.findByName(data.name);
+    if (existing) {
+      throw { statusCode: 400, message: 'Tournament with this name already exists.', messageFA: 'تورنمنتی با این نام از قبل وجود دارد.' };
+    }
+
     const t = await TournamentRepository.create({
       name: data.name,
       nameFa: data.nameFA,

@@ -42,6 +42,7 @@ export class PlayerRepository {
         role: players.role,
         teamId: players.teamId,
         banStatus: players.banStatus,
+        hwid: players.hwid,
         createdAt: players.createdAt,
         updatedAt: players.updatedAt,
       })
@@ -53,6 +54,7 @@ export class PlayerRepository {
     const [totalRes] = await db.select({ count: count() }).from(players).where(whereClause);
 
     return {
+      items: list,
       players: list,
       total: totalRes?.count || 0,
     };
@@ -68,6 +70,7 @@ export class PlayerRepository {
         role: players.role,
         teamId: players.teamId,
         banStatus: players.banStatus,
+        hwid: players.hwid,
         hardwareFingerprintHash: players.hardwareFingerprintHash,
         createdAt: players.createdAt,
         updatedAt: players.updatedAt,
@@ -125,6 +128,15 @@ export class PlayerRepository {
     await db
       .update(players)
       .set({ hardwareFingerprintHash: fingerprintHash, updatedAt: new Date() })
+      .where(eq(players.id, playerId));
+
+    return this.findById(playerId);
+  }
+
+  static async updateHwid(playerId: string, hwid: string | null) {
+    await db
+      .update(players)
+      .set({ hwid, updatedAt: new Date() })
       .where(eq(players.id, playerId));
 
     return this.findById(playerId);

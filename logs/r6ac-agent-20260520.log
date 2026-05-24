@@ -1,0 +1,77 @@
+2026-05-20 08:42:08.961 +03:30 [INF] Initializing AgentService (Phase 5 Hardened)...
+2026-05-20 08:42:09.001 +03:30 [WRN] integrity-manifest.json not found in directory. Proceeding unverified.
+2026-05-20 08:42:09.002 +03:30 [INF] Critical memory regions locked successfully (PAGE_EXECUTE_READ).
+2026-05-20 08:42:09.162 +03:30 [INF] Optional agent update available: v1.0.1
+2026-05-20 08:42:09.386 +03:30 [WRN] Failed to connect to R6AC Kernel Driver. Running in user-mode only degradation.
+2026-05-20 08:42:09.393 +03:30 [WRN] Critical method prologue hook detected on ScoringEngine.ComputeScore!
+2026-05-20 08:42:10.054 +03:30 [WRN] Detection by ProcessDetector: SUSPICIOUS_STATELESS_HIGH_RESOURCE_PROCESS (65 %)
+2026-05-20 08:42:10.227 +03:30 [WRN] Detection by InputDeviceDetector: MULTIPLE_HID_INJECTION_DEVICES (60 %)
+2026-05-20 08:42:10.363 +03:30 [WRN] Detection by NetworkInterfaceDetector: UNAUTHORIZED_VPN_OR_TUNNEL (80 %)
+2026-05-20 08:42:10.958 +03:30 [WRN] Detection by AdvancedUsbDetector: VID:0x046D PID:0x085C Manufacturer:Logitech SerialNumber:none (88 %)
+2026-05-20 08:42:11.166 +03:30 [WRN] Detection by SpoofDetector: DISK_SERIAL_INCONSISTENCY_SPOOF (92 %)
+2026-05-20 08:42:16.844 +03:30 [WRN] Critical method prologue hook detected on ScoringEngine.ComputeScore!
+2026-05-20 08:42:17.355 +03:30 [WRN] Detection by ProcessDetector: SUSPICIOUS_STATELESS_HIGH_RESOURCE_PROCESS (65 %)
+2026-05-20 08:42:17.483 +03:30 [WRN] Detection by InputDeviceDetector: MULTIPLE_HID_INJECTION_DEVICES (60 %)
+2026-05-20 08:42:17.609 +03:30 [WRN] Detection by NetworkInterfaceDetector: UNAUTHORIZED_VPN_OR_TUNNEL (80 %)
+2026-05-20 08:42:18.008 +03:30 [WRN] Detection by AdvancedUsbDetector: VID:0x046D PID:0x085C Manufacturer:Logitech SerialNumber:none (88 %)
+2026-05-20 08:42:18.224 +03:30 [WRN] Detection by SpoofDetector: DISK_SERIAL_INCONSISTENCY_SPOOF (92 %)
+2026-05-20 08:42:23.863 +03:30 [WRN] Critical method prologue hook detected on ScoringEngine.ComputeScore!
+2026-05-20 08:42:24.389 +03:30 [WRN] Detection by ProcessDetector: SUSPICIOUS_STATELESS_HIGH_RESOURCE_PROCESS (65 %)
+2026-05-20 08:42:24.540 +03:30 [WRN] Detection by InputDeviceDetector: MULTIPLE_HID_INJECTION_DEVICES (60 %)
+2026-05-20 08:42:24.658 +03:30 [WRN] Detection by NetworkInterfaceDetector: UNAUTHORIZED_VPN_OR_TUNNEL (80 %)
+2026-05-20 08:42:25.057 +03:30 [WRN] Detection by AdvancedUsbDetector: VID:0x046D PID:0x085C Manufacturer:Logitech SerialNumber:none (88 %)
+2026-05-20 08:42:25.268 +03:30 [WRN] Detection by SpoofDetector: DISK_SERIAL_INCONSISTENCY_SPOOF (92 %)
+2026-05-20 08:42:30.895 +03:30 [WRN] Critical method prologue hook detected on ScoringEngine.ComputeScore!
+2026-05-20 08:42:31.401 +03:30 [WRN] Detection by ProcessDetector: SUSPICIOUS_STATELESS_HIGH_RESOURCE_PROCESS (65 %)
+2026-05-20 08:42:31.516 +03:30 [WRN] Detection by InputDeviceDetector: MULTIPLE_HID_INJECTION_DEVICES (60 %)
+2026-05-20 08:42:31.628 +03:30 [WRN] Detection by NetworkInterfaceDetector: UNAUTHORIZED_VPN_OR_TUNNEL (80 %)
+2026-05-20 08:42:32.007 +03:30 [WRN] Detection by AdvancedUsbDetector: VID:0x046D PID:0x085C Manufacturer:Logitech SerialNumber:none (88 %)
+2026-05-20 08:42:32.195 +03:30 [WRN] Detection by SpoofDetector: DISK_SERIAL_INCONSISTENCY_SPOOF (92 %)
+2026-05-20 08:42:37.843 +03:30 [WRN] Critical method prologue hook detected on ScoringEngine.ComputeScore!
+2026-05-20 08:42:38.370 +03:30 [WRN] Detection by ProcessDetector: SUSPICIOUS_STATELESS_HIGH_RESOURCE_PROCESS (65 %)
+2026-05-20 08:42:38.504 +03:30 [WRN] Detection by InputDeviceDetector: MULTIPLE_HID_INJECTION_DEVICES (60 %)
+2026-05-20 08:42:38.628 +03:30 [WRN] Detection by NetworkInterfaceDetector: UNAUTHORIZED_VPN_OR_TUNNEL (80 %)
+2026-05-20 08:42:39.059 +03:30 [WRN] Detection by AdvancedUsbDetector: VID:0x046D PID:0x085C Manufacturer:Logitech SerialNumber:none (88 %)
+2026-05-20 08:42:39.266 +03:30 [WRN] Detection by SpoofDetector: DISK_SERIAL_INCONSISTENCY_SPOOF (92 %)
+2026-05-20 08:42:39.535 +03:30 [INF] Successfully synced report c7051a15-0a6b-4334-88c5-db86fb325b00 to server.
+2026-05-20 08:42:39.587 +03:30 [INF] Successfully synced report f0ccad49-8539-4fa0-85df-1e07e2c47727 to server.
+2026-05-20 08:42:39.621 +03:30 [INF] Successfully synced report 39c2d97f-ec33-4e72-8091-4afcf7ba32d7 to server.
+2026-05-20 08:42:39.658 +03:30 [INF] Successfully synced report aaff794f-3366-4692-ad6f-ef3ae4fe7bfa to server.
+2026-05-20 08:42:39.692 +03:30 [INF] Successfully synced report 1b9ef554-44cc-47cd-90e3-ae4100be5f44 to server.
+2026-05-20 08:42:39.725 +03:30 [INF] Successfully synced report df71fb67-8e9f-44f2-bbf4-f6ede0ee904e to server.
+2026-05-20 08:42:39.766 +03:30 [INF] Successfully synced report 8686cf23-a63c-40b8-a5fe-9d806866ab53 to server.
+2026-05-20 08:42:39.800 +03:30 [INF] Successfully synced report 61062b58-bb03-4da5-9fb3-0f65db43ff74 to server.
+2026-05-20 08:42:39.830 +03:30 [INF] Successfully synced report 30db731d-8e55-4e4b-81e4-ccdfff2568f4 to server.
+2026-05-20 08:42:39.862 +03:30 [INF] Successfully synced report 00f21972-835d-4ebd-be6b-0374fe3010a2 to server.
+2026-05-20 08:42:39.892 +03:30 [INF] Successfully synced report 5b2cd6f3-b695-4d58-8e43-290ed76a2d11 to server.
+2026-05-20 08:42:39.922 +03:30 [INF] Successfully synced report e702bed6-251b-40f1-af2d-33c1d1c37adf to server.
+2026-05-20 08:42:39.955 +03:30 [INF] Successfully synced report 0d4dc864-3cea-41b5-9683-fa841701ca86 to server.
+2026-05-20 08:42:39.991 +03:30 [INF] Successfully synced report cefff996-07a6-453b-a573-962c66ce0557 to server.
+2026-05-20 08:42:40.021 +03:30 [INF] Successfully synced report 70841434-a67b-45cd-a097-47e4975cec17 to server.
+2026-05-20 08:42:40.058 +03:30 [INF] Successfully synced report dc8fb637-2c9e-4c6e-91bd-0fce4c0e3ac7 to server.
+2026-05-20 08:42:40.089 +03:30 [INF] Successfully synced report d9899252-3a8d-4704-bfaa-448770d23600 to server.
+2026-05-20 08:42:40.122 +03:30 [INF] Successfully synced report d404b505-9f2e-4f27-87f6-c675d936feb9 to server.
+2026-05-20 08:42:40.151 +03:30 [INF] Successfully synced report d0de1104-f3e5-45e6-96d1-0de5eda1898b to server.
+2026-05-20 08:42:40.184 +03:30 [INF] Successfully synced report de2e78a4-805d-4cbd-91e9-11b3df0236d3 to server.
+2026-05-20 08:42:40.216 +03:30 [INF] Successfully synced report efa09dc1-6e27-464a-a862-13fdbe46c892 to server.
+2026-05-20 08:42:40.246 +03:30 [INF] Successfully synced report 6c4b4767-4a6c-4a1e-9a32-38fc603e0d1f to server.
+2026-05-20 08:42:40.283 +03:30 [INF] Successfully synced report 948b2cd9-83b6-4cff-af62-f7221995d24f to server.
+2026-05-20 08:42:40.315 +03:30 [INF] Successfully synced report 8140f538-81c7-442f-9d15-22d66e208468 to server.
+2026-05-20 08:42:40.347 +03:30 [INF] Successfully synced report 47c35caa-cb78-49c7-9122-67adbd9315cc to server.
+2026-05-20 08:42:40.380 +03:30 [INF] Successfully synced report a02659bc-88ae-4190-8ee8-743e30f719cf to server.
+2026-05-20 08:42:40.412 +03:30 [INF] Successfully synced report a7c27a09-e44e-472d-a6e7-3a264fd7718e to server.
+2026-05-20 08:42:40.445 +03:30 [INF] Successfully synced report 98641a74-4959-4757-9c48-87606788a47b to server.
+2026-05-20 08:42:40.481 +03:30 [INF] Successfully synced report 09305a81-bc00-438b-b103-3111c2ea0e33 to server.
+2026-05-20 08:42:40.516 +03:30 [INF] Successfully synced report cee6d3e3-379e-48d9-ba4d-c161d7c1e68b to server.
+2026-05-20 08:42:44.913 +03:30 [WRN] Critical method prologue hook detected on ScoringEngine.ComputeScore!
+2026-05-20 08:42:45.422 +03:30 [WRN] Detection by ProcessDetector: SUSPICIOUS_STATELESS_HIGH_RESOURCE_PROCESS (65 %)
+2026-05-20 08:42:45.532 +03:30 [WRN] Detection by InputDeviceDetector: MULTIPLE_HID_INJECTION_DEVICES (60 %)
+2026-05-20 08:42:45.653 +03:30 [WRN] Detection by NetworkInterfaceDetector: UNAUTHORIZED_VPN_OR_TUNNEL (80 %)
+2026-05-20 08:42:46.029 +03:30 [WRN] Detection by AdvancedUsbDetector: VID:0x046D PID:0x085C Manufacturer:Logitech SerialNumber:none (88 %)
+2026-05-20 08:42:46.223 +03:30 [WRN] Detection by SpoofDetector: DISK_SERIAL_INCONSISTENCY_SPOOF (92 %)
+2026-05-20 08:42:51.852 +03:30 [WRN] Critical method prologue hook detected on ScoringEngine.ComputeScore!
+2026-05-20 08:42:52.393 +03:30 [WRN] Detection by ProcessDetector: SUSPICIOUS_STATELESS_HIGH_RESOURCE_PROCESS (65 %)
+2026-05-20 08:42:52.517 +03:30 [WRN] Detection by InputDeviceDetector: MULTIPLE_HID_INJECTION_DEVICES (60 %)
+2026-05-20 08:42:52.631 +03:30 [WRN] Detection by NetworkInterfaceDetector: UNAUTHORIZED_VPN_OR_TUNNEL (80 %)
+2026-05-20 08:42:53.006 +03:30 [WRN] Detection by AdvancedUsbDetector: VID:0x046D PID:0x085C Manufacturer:Logitech SerialNumber:none (88 %)
+2026-05-20 08:42:53.203 +03:30 [WRN] Detection by SpoofDetector: DISK_SERIAL_INCONSISTENCY_SPOOF (92 %)

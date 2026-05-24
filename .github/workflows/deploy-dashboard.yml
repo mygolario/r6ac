@@ -45,11 +45,14 @@ jobs:
         run: npm install -g @liara/cli
         
       - name: Deploy Dashboard to Liara
-        working-directory: apps/dashboard
         env:
           LIARA_TOKEN: ${{ secrets.LIARA_TOKEN }}
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+          VITE_WS_URL: ${{ secrets.VITE_WS_URL }}
         run: |
+          node scripts/copy-liara-config.mjs dashboard
           liara deploy \
-            --app r6ac-dashboard \
-            --port 80 \
+            --path . \
+            --dockerfile apps/dashboard/Dockerfile \
+            --args VITE_API_BASE_URL=${{ secrets.VITE_API_BASE_URL }},VITE_WS_URL=${{ secrets.VITE_WS_URL }} \
             --no-app-logs

@@ -2,7 +2,7 @@ import { useAuthStore } from '../stores/auth-store';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL 
   ? `${import.meta.env.VITE_API_BASE_URL}/api/v1` 
-  : 'http://localhost:4000/api/v1';
+  : 'https://r6ac-api.liara.run/api/v1';
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -33,10 +33,12 @@ export async function apiClient<T = any>(endpoint: string, options: RequestInit 
 
   const url = `${BASE_URL}${endpoint}`;
 
+
   let response = await fetch(url, {
     ...options,
     headers,
   });
+
 
   if (response.status === 401 && endpoint !== '/auth/login' && endpoint !== '/auth/refresh') {
     if (!isRefreshing) {

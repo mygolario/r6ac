@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "TfrqRCH9UJY=",
+  "dgSpecHash": "afHwRURIXrM=",
   "success": true,
   "projectFilePath": "C:\\R6AC-Project\\apps\\agent\\R6AC.Agent.Tests\\R6AC.Agent.Tests.csproj",
   "expectedPackageFiles": [
@@ -27,8 +27,7 @@
     "C:\\Users\\Ario\\.nuget\\packages\\system.reflection.metadata\\1.6.0\\system.reflection.metadata.1.6.0.nupkg.sha512",
     "C:\\Users\\Ario\\.nuget\\packages\\system.security.accesscontrol\\5.0.0\\system.security.accesscontrol.5.0.0.nupkg.sha512",
     "C:\\Users\\Ario\\.nuget\\packages\\system.security.principal.windows\\5.0.0\\system.security.principal.windows.5.0.0.nupkg.sha512",
-    "C:\\Users\\Ario\\.nuget\\packages\\system.text.encodings.web\\8.0.0\\system.text.encodings.web.8.0.0.nupkg.sha512",
-    "C:\\Users\\Ario\\.nuget\\packages\\system.text.json\\8.0.0\\system.text.json.8.0.0.nupkg.sha512",
+    "C:\\Users\\Ario\\.nuget\\packages\\system.text.json\\8.0.5\\system.text.json.8.0.5.nupkg.sha512",
     "C:\\Users\\Ario\\.nuget\\packages\\xunit\\2.7.0\\xunit.2.7.0.nupkg.sha512",
     "C:\\Users\\Ario\\.nuget\\packages\\xunit.abstractions\\2.0.3\\xunit.abstractions.2.0.3.nupkg.sha512",
     "C:\\Users\\Ario\\.nuget\\packages\\xunit.analyzers\\1.11.0\\xunit.analyzers.1.11.0.nupkg.sha512",
@@ -38,26 +37,5 @@
     "C:\\Users\\Ario\\.nuget\\packages\\xunit.extensibility.execution\\2.7.0\\xunit.extensibility.execution.2.7.0.nupkg.sha512",
     "C:\\Users\\Ario\\.nuget\\packages\\xunit.runner.visualstudio\\2.8.0\\xunit.runner.visualstudio.2.8.0.nupkg.sha512"
   ],
-  "logs": [
-    {
-      "code": "NU1603",
-      "level": "Warning",
-      "warningLevel": 1,
-      "message": "R6AC.Agent.Tests depends on Moq (>= 4.20.7) but Moq 4.20.7 was not found. An approximate best match of Moq 4.20.69 was resolved.",
-      "libraryId": "Moq",
-      "targetGraphs": [
-        "net8.0-windows7.0"
-      ]
-    },
-    {
-      "code": "NU1603",
-      "level": "Warning",
-      "warningLevel": 1,
-      "message": "R6AC.Agent.Tests depends on xunit.runner.visualstudio (>= 2.7.0) but xunit.runner.visualstudio 2.7.0 was not found. An approximate best match of xunit.runner.visualstudio 2.8.0 was resolved.",
-      "libraryId": "xunit.runner.visualstudio",
-      "targetGraphs": [
-        "net8.0-windows7.0"
-      ]
-    }
-  ]
+  "logs": []
 }
